@@ -1,7 +1,7 @@
-use crate::{Validator, Value, Error};
+use crate::{Error, Validator, Value};
 
 pub fn any() -> impl Validator {
-    AnyValidator{}
+    AnyValidator {}
 }
 
 struct AnyValidator {}
@@ -24,7 +24,7 @@ pub fn null() -> impl Validator {
     PrimitiveValidator {
         typename: String::from("null"),
         extract: Box::new(|val| val.as_null()),
-        predicate: Box::new(|_| Ok(()))
+        predicate: Box::new(|_| Ok(())),
     }
 }
 
@@ -64,17 +64,15 @@ struct PrimitiveValidator<T> {
 
 impl<T> Validator for PrimitiveValidator<T> {
     fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>> {
-        let val = (self.extract)(value)
-            .ok_or(Error::InvalidType(value, self.typename.clone()))?;
+        let val = (self.extract)(value).ok_or(Error::InvalidType(value, self.typename.clone()))?;
 
-        (self.predicate)(&val)
-            .map_err(|msg| Error::InvalidValue(value, msg))
+        (self.predicate)(&val).map_err(|msg| Error::InvalidValue(value, msg))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{Validator, Value, Error};
+    use crate::{Error, Validator, Value};
 
     #[test]
     fn any() {
@@ -95,8 +93,10 @@ mod tests {
         let _error_msg = String::from("error message");
         let validator = super::string(Box::new(move |_| Err(_error_msg.clone())));
 
-        assert!(matches!(validator.validate(&Value::String("".to_string())), Err(Error::InvalidValue(_, _error_msg))));
-
+        assert!(matches!(
+            validator.validate(&Value::String("".to_string())),
+            Err(Error::InvalidValue(_, _error_msg))
+        ));
     }
 
     #[test]
@@ -104,7 +104,10 @@ mod tests {
         let validator = super::string(Box::new(|_| Ok(())));
 
         let _expected_type = String::from("string");
-        assert!(matches!(validator.validate(&Value::Null), Err(Error::InvalidType(_, _expected_type))));
+        assert!(matches!(
+            validator.validate(&Value::Null),
+            Err(Error::InvalidType(_, _expected_type))
+        ));
     }
 
     #[test]
