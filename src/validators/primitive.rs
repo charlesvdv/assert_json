@@ -1,17 +1,5 @@
 use crate::{Error, Validator, Value};
 
-pub fn any() -> impl Validator {
-    AnyValidator {}
-}
-
-struct AnyValidator {}
-
-impl Validator for AnyValidator {
-    fn validate<'a>(&self, _: &'a Value) -> Result<(), Error<'a>> {
-        Ok(())
-    }
-}
-
 pub fn string(predicate: Box<dyn Fn(&String) -> Result<(), String>>) -> impl Validator {
     PrimitiveValidator {
         typename: String::from("string"),
@@ -73,13 +61,6 @@ impl<T> Validator for PrimitiveValidator<T> {
 #[cfg(test)]
 mod tests {
     use crate::{Error, Validator, Value};
-
-    #[test]
-    fn any() {
-        let validator = super::any();
-
-        assert_eq!(Ok(()), validator.validate(&Value::Null));
-    }
 
     #[test]
     fn string() {
