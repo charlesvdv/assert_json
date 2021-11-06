@@ -1,30 +1,30 @@
 use crate::{Error, Validator, Value};
 
-pub fn string(predicate: Box<dyn Fn(&String) -> Result<(), String>>) -> impl Validator {
-    PrimitiveValidator {
+pub fn string(predicate: Box<dyn Fn(&String) -> Result<(), String>>) -> Box<dyn Validator> {
+    Box::new(PrimitiveValidator {
         typename: String::from("string"),
         extract: Box::new(|val: &Value| val.as_str().map(|v| String::from(v))),
         predicate,
-    }
+    })
 }
 
-pub fn null() -> impl Validator {
-    PrimitiveValidator {
+pub fn null() -> Box<dyn Validator> {
+    Box::new(PrimitiveValidator {
         typename: String::from("null"),
         extract: Box::new(|val| val.as_null()),
         predicate: Box::new(|_| Ok(())),
-    }
+    })
 }
 
-pub fn bool(predicate: Box<dyn Fn(&bool) -> Result<(), String>>) -> impl Validator {
-    PrimitiveValidator {
+pub fn bool(predicate: Box<dyn Fn(&bool) -> Result<(), String>>) -> Box<dyn Validator> {
+    Box::new(PrimitiveValidator {
         typename: String::from("bool"),
         extract: Box::new(|val| val.as_bool()),
         predicate,
-    }
+    })
 }
 
-pub fn bool_true() -> impl Validator {
+pub fn bool_true() -> Box<dyn Validator> {
     bool(Box::new(|val| {
         if *val {
             Ok(())
@@ -34,7 +34,7 @@ pub fn bool_true() -> impl Validator {
     }))
 }
 
-pub fn bool_false() -> impl Validator {
+pub fn bool_false() -> Box<dyn Validator> {
     bool(Box::new(|val| {
         if !*val {
             Ok(())
@@ -60,7 +60,7 @@ impl<T> Validator for PrimitiveValidator<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Error, Validator, Value};
+    use crate::{Error, Value};
 
     #[test]
     fn string() {
@@ -71,12 +71,11 @@ mod tests {
 
     #[test]
     fn string_invalid_value() {
-        let _error_msg = String::from("error message");
-        let validator = super::string(Box::new(move |_| Err(_error_msg.clone())));
+        let validator = super::string(Box::new(move |_| Err(String::from("error message"))));
 
         assert!(matches!(
             validator.validate(&Value::String("".to_string())),
-            Err(Error::InvalidValue(_, _error_msg))
+            Err(Error::InvalidValue(_, _))
         ));
     }
 
@@ -84,10 +83,9 @@ mod tests {
     fn string_invalid_type() {
         let validator = super::string(Box::new(|_| Ok(())));
 
-        let _expected_type = String::from("string");
         assert!(matches!(
             validator.validate(&Value::Null),
-            Err(Error::InvalidType(_, _expected_type))
+            Err(Error::InvalidType(_, _))
         ));
     }
 

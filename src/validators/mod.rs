@@ -1,10 +1,13 @@
 use crate::{Error, Validator, Value};
 
+mod object;
 mod primitive;
+
+pub use object::*;
 pub use primitive::*;
 
-pub fn any() -> impl Validator {
-    AnyValidator {}
+pub fn any() -> Box<dyn Validator> {
+    Box::new(AnyValidator {})
 }
 
 struct AnyValidator {}
@@ -17,7 +20,7 @@ impl Validator for AnyValidator {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Validator, Value};
+    use crate::Value;
 
     #[test]
     fn any() {

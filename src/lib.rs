@@ -6,6 +6,10 @@ pub enum Error<'a> {
     InvalidType(&'a Value, String),
     #[error("Invalid value: {1}")]
     InvalidValue(&'a Value, String),
+    #[error("Missing key '{1}' in object")]
+    MissingObjectKey(&'a Value, String),
+    #[error("Key '{1}' is not expected in object")]
+    UnexpectedObjectKey(&'a Value, String),
 }
 
 pub trait Validator {
