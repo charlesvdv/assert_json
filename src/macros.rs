@@ -208,6 +208,11 @@ macro_rules! json_expect_expr_comma {
 #[cfg(test)]
 mod test {
     #[test]
+    fn assert_json_with_serde_input() {
+        assert_json!(serde_json::json!("hello"), "hello");
+    }
+
+    #[test]
     fn assert_json_null() {
         assert_json!("null", null);
     }
@@ -241,5 +246,21 @@ mod test {
     #[test]
     fn assert_json_number() {
         assert_json!("15", 15);
+    }
+
+    #[test]
+    fn assert_json_nested_object() {
+        let json = serde_json::json!({
+            "key": {
+                "nestedkey": "nestedvalue"
+            },
+            "anotherkey": "anothervalue"
+        });
+        assert_json!(json, {
+            "key": {
+                "nestedkey": "nestedvalue"
+            },
+            "anotherkey": "anothervalue"
+        });
     }
 }
