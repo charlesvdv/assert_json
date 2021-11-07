@@ -22,6 +22,8 @@ macro_rules! assert_json {
 
         struct ValidatorInput(Box<dyn Validator>);
 
+        impl_from_validator_input_default!(String, bool, u8, u16, u32, u64, usize, i8, i16, i32, i64, isize);
+
         impl From<&str> for ValidatorInput {
             fn from(str_input: &str) -> ValidatorInput {
                 ValidatorInput(validators::eq(String::from(str_input)))
@@ -40,6 +42,23 @@ macro_rules! assert_json {
         if let Err(error) = result {
             panic!("assertion failed: json: {}", error)
         }
+    };
+}
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! impl_from_validator_input_default {
+    (
+        $($ty:ty),*
+    ) => {
+        $(
+            impl From<$ty> for ValidatorInput {
+                #[inline]
+                fn from(u: $ty) -> Self {
+                    ValidatorInput(validators::eq(u))
+                }
+            }
+        )*
     };
 }
 
@@ -154,14 +173,6 @@ macro_rules! expand_json_validator {
         validators::null()
     };
 
-    (true) => {
-        validators::eq(true)
-    };
-
-    (false) => {
-        validators::eq(false)
-    };
-
     ({}) => {
         validators::object(HashMap::new())
     };
@@ -225,5 +236,10 @@ mod test {
     #[test]
     fn assert_json_string() {
         assert_json!(r#""test""#, "test");
+    }
+
+    #[test]
+    fn assert_json_number() {
+        assert_json!("15", 15);
     }
 }
