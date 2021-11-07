@@ -25,13 +25,13 @@ macro_rules! assert_json {
         impl From<&str> for ValidatorInput {
             fn from(str_input: &str) -> ValidatorInput {
                 let str_input = String::from(str_input);
-                ValidatorInput(validators::string(Box::new(move |val| {
+                ValidatorInput(validators::string(move |val| {
                     if val.as_str() == str_input {
                         Ok(())
                     } else {
                         Err(format!("expected '{}' got '{}'", str_input, val))
                     }
-                })))
+                }))
             }
         }
 

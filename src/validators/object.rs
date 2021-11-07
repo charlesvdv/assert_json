@@ -52,10 +52,7 @@ mod tests {
     #[test]
     fn valid() {
         let mut key_validators: HashMap<String, Box<dyn Validator>> = HashMap::new();
-        key_validators.insert(
-            String::from("key"),
-            validators::string(Box::new(|_| Ok(()))),
-        );
+        key_validators.insert(String::from("key"), validators::string(|_| Ok(())));
 
         let validator = super::object(key_validators);
         assert_eq!(
@@ -67,10 +64,7 @@ mod tests {
     #[test]
     fn missing_key() {
         let mut key_validators: HashMap<String, Box<dyn Validator>> = HashMap::new();
-        key_validators.insert(
-            String::from("key"),
-            validators::string(Box::new(|_| Ok(()))),
-        );
+        key_validators.insert(String::from("key"), validators::string(|_| Ok(())));
 
         let validator = super::object(key_validators);
         assert!(matches!(
