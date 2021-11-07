@@ -30,6 +30,39 @@ where
     })
 }
 
+pub fn i64<F>(predicate: F) -> Box<dyn Validator>
+where
+    F: Fn(&i64) -> Result<(), String> + 'static,
+{
+    Box::new(PrimitiveValidator {
+        typename: String::from("i64"),
+        extract: Box::new(|val| val.as_i64()),
+        predicate,
+    })
+}
+
+pub fn u64<F>(predicate: F) -> Box<dyn Validator>
+where
+    F: Fn(&u64) -> Result<(), String> + 'static,
+{
+    Box::new(PrimitiveValidator {
+        typename: String::from("u64"),
+        extract: Box::new(|val| val.as_u64()),
+        predicate,
+    })
+}
+
+pub fn f64<F>(predicate: F) -> Box<dyn Validator>
+where
+    F: Fn(&f64) -> Result<(), String> + 'static,
+{
+    Box::new(PrimitiveValidator {
+        typename: String::from("f64"),
+        extract: Box::new(|val| val.as_f64()),
+        predicate,
+    })
+}
+
 struct PrimitiveValidator<T, F>
 where
     F: Fn(&T) -> Result<(), String>,
@@ -86,5 +119,12 @@ mod tests {
         let validator = super::null();
 
         assert_eq!(Ok(()), validator.validate(&Value::Null));
+    }
+
+    #[test]
+    fn i64() {
+        let validator = super::i64(|_| Ok(()));
+
+        assert_eq!(Ok(()), validator.validate(&serde_json::json!(4)));
     }
 }

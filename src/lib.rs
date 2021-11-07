@@ -1,4 +1,4 @@
-type Value = serde_json::Value;
+pub type Value = serde_json::Value;
 
 #[derive(thiserror::Error, Debug, PartialEq)]
 pub enum Error<'a> {
