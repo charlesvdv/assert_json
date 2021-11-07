@@ -30,26 +30,6 @@ where
     })
 }
 
-pub fn bool_true() -> Box<dyn Validator> {
-    bool(|val| {
-        if *val {
-            Ok(())
-        } else {
-            Err(String::from("value not true"))
-        }
-    })
-}
-
-pub fn bool_false() -> Box<dyn Validator> {
-    bool(|val| {
-        if !*val {
-            Ok(())
-        } else {
-            Err(String::from("value not false"))
-        }
-    })
-}
-
 struct PrimitiveValidator<T, F>
 where
     F: Fn(&T) -> Result<(), String>,
