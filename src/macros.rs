@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! assert_json {
-    ($val:expr , $($validator:tt)+) => {
+    ($val:expr , $($validator:tt)+) => ({
         use $crate::validators;
         use $crate::{Validator};
 
@@ -42,7 +42,7 @@ macro_rules! assert_json {
         if let Err(error) = result {
             panic!("assertion failed: json: {}", error)
         }
-    };
+    });
 }
 
 #[macro_export]
@@ -262,5 +262,12 @@ mod test {
             },
             "anotherkey": "anothervalue"
         });
+    }
+
+    #[test]
+    fn assert_json_is_expression() {
+        assert_json!("null", null) // the missing ";" is normal
+                                   // this is to test if the the assert_json macros
+                                   // can be used as an expression like assert_eq!
     }
 }
