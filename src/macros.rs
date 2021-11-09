@@ -25,14 +25,14 @@ macro_rules! assert_json {
         impl_from_validator_input_default!(String, bool, u8, u16, u32, u64, usize, i8, i16, i32, i64, isize);
 
         impl From<&str> for ValidatorInput {
-            fn from(str_input: &str) -> ValidatorInput {
-                ValidatorInput(validators::eq(String::from(str_input)))
+            fn from(str_input: &str) -> Self {
+                ValidatorInput(Box::new(validators::eq(String::from(str_input))))
             }
         }
 
-        impl From<Box<dyn Validator>> for ValidatorInput {
-            fn from(validator: Box<dyn Validator>) -> ValidatorInput {
-                ValidatorInput(validator)
+        impl<T> From<T> for ValidatorInput where T: Validator + 'static {
+            fn from(validator: T) -> Self {
+                ValidatorInput(Box::new(validator))
             }
         }
 
@@ -55,7 +55,7 @@ macro_rules! impl_from_validator_input_default {
             impl From<$ty> for ValidatorInput {
                 #[inline]
                 fn from(u: $ty) -> Self {
-                    ValidatorInput(validators::eq(u))
+                    ValidatorInput(Box::new(validators::eq(u)))
                 }
             }
         )*
@@ -220,6 +220,14 @@ mod test {
     #[test]
     fn assert_json_validator() {
         assert_json!("null", crate::validators::any());
+    }
+
+    #[test]
+    fn assert_json_validator_with_and() {
+        assert_json!(
+            r#""test""#,
+            crate::validators::any().and(Box::new(crate::validators::eq(String::from("test"))))
+        );
     }
 
     #[test]

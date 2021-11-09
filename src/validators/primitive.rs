@@ -1,66 +1,66 @@
-use crate::{Error, Validator, ValidatorBase, Value};
+use crate::{Error, Validator, Value};
 
-pub fn string<F>(predicate: F) -> Box<dyn Validator>
+pub fn string<F>(predicate: F) -> impl Validator
 where
     F: Fn(&String) -> Result<(), String> + 'static,
 {
-    Box::new(PrimitiveValidator {
+    PrimitiveValidator {
         typename: String::from("string"),
-        extract: Box::new(|val: &Value| val.as_str().map(|v| String::from(v))),
+        extract: Box::new(|val: &Value| val.as_str().map(String::from)),
         predicate,
-    })
+    }
 }
 
-pub fn null() -> Box<dyn Validator> {
-    Box::new(PrimitiveValidator {
+pub fn null() -> impl Validator {
+    PrimitiveValidator {
         typename: String::from("null"),
         extract: Box::new(|val| val.as_null()),
         predicate: |_| Ok(()),
-    })
+    }
 }
 
-pub fn bool<F>(predicate: F) -> Box<dyn Validator>
+pub fn bool<F>(predicate: F) -> impl Validator
 where
     F: Fn(&bool) -> Result<(), String> + 'static,
 {
-    Box::new(PrimitiveValidator {
+    PrimitiveValidator {
         typename: String::from("bool"),
         extract: Box::new(|val| val.as_bool()),
         predicate,
-    })
+    }
 }
 
-pub fn i64<F>(predicate: F) -> Box<dyn Validator>
+pub fn i64<F>(predicate: F) -> impl Validator
 where
     F: Fn(&i64) -> Result<(), String> + 'static,
 {
-    Box::new(PrimitiveValidator {
+    PrimitiveValidator {
         typename: String::from("i64"),
         extract: Box::new(|val| val.as_i64()),
         predicate,
-    })
+    }
 }
 
-pub fn u64<F>(predicate: F) -> Box<dyn Validator>
+pub fn u64<F>(predicate: F) -> impl Validator
 where
     F: Fn(&u64) -> Result<(), String> + 'static,
 {
-    Box::new(PrimitiveValidator {
+    PrimitiveValidator {
         typename: String::from("u64"),
         extract: Box::new(|val| val.as_u64()),
         predicate,
-    })
+    }
 }
 
-pub fn f64<F>(predicate: F) -> Box<dyn Validator>
+pub fn f64<F>(predicate: F) -> impl Validator
 where
     F: Fn(&f64) -> Result<(), String> + 'static,
 {
-    Box::new(PrimitiveValidator {
+    PrimitiveValidator {
         typename: String::from("f64"),
         extract: Box::new(|val| val.as_f64()),
         predicate,
-    })
+    }
 }
 
 struct PrimitiveValidator<T, F>
@@ -72,12 +72,13 @@ where
     predicate: F,
 }
 
-impl<T, F> ValidatorBase for PrimitiveValidator<T, F>
+impl<T, F> Validator for PrimitiveValidator<T, F>
 where
     F: Fn(&T) -> Result<(), String>,
 {
     fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>> {
-        let val = (self.extract)(value).ok_or(Error::InvalidType(value, self.typename.clone()))?;
+        let val = (self.extract)(value)
+            .ok_or_else(|| Error::InvalidType(value, self.typename.clone()))?;
 
         (self.predicate)(&val).map_err(|msg| Error::InvalidValue(value, msg))
     }
@@ -85,7 +86,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{Error, Value};
+    use crate::{Error, Validator, Value};
 
     #[test]
     fn string() {

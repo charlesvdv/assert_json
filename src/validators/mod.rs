@@ -1,4 +1,4 @@
-use crate::{Error, Validator, ValidatorBase, Value};
+use crate::{Error, Validator, Value};
 use std::fmt::Debug;
 
 mod object;
@@ -7,23 +7,23 @@ mod primitive;
 pub use object::*;
 pub use primitive::*;
 
-pub fn any() -> Box<dyn Validator> {
-    Box::new(AnyValidator {})
+pub fn any() -> impl Validator {
+    AnyValidator {}
 }
 
 struct AnyValidator {}
 
-impl ValidatorBase for AnyValidator {
+impl Validator for AnyValidator {
     fn validate<'a>(&self, _: &'a Value) -> Result<(), Error<'a>> {
         Ok(())
     }
 }
 
-pub fn eq<T>(expected: T) -> Box<dyn Validator>
+pub fn eq<T>(expected: T) -> impl Validator
 where
     T: Into<Value> + Clone + Debug + 'static,
 {
-    Box::new(EqValidator { expected })
+    EqValidator { expected }
 }
 
 struct EqValidator<T>
@@ -33,7 +33,7 @@ where
     expected: T,
 }
 
-impl<T> ValidatorBase for EqValidator<T>
+impl<T> Validator for EqValidator<T>
 where
     T: Into<Value> + Clone + Debug,
 {
@@ -48,7 +48,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{Error, Value};
+    use crate::{Error, Validator, Value};
 
     #[test]
     fn any() {
@@ -66,7 +66,7 @@ mod tests {
 
     #[test]
     fn eq_string_fail() {
-        let validator = super::eq("test");
+        let validator = super::eq(String::from("test"));
 
         assert!(matches!(
             validator.validate(&serde_json::json!("not expected")),

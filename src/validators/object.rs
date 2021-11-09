@@ -1,4 +1,4 @@
-use crate::{Error, Validator, ValidatorBase, Value};
+use crate::{Error, Validator, Value};
 use std::collections::HashMap;
 
 pub fn object(key_validators: HashMap<String, Box<dyn Validator>>) -> Box<dyn Validator> {
@@ -13,16 +13,16 @@ struct ObjectValidator {
     strict: bool,
 }
 
-impl ValidatorBase for ObjectValidator {
+impl Validator for ObjectValidator {
     fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>> {
         let object = value
             .as_object()
-            .ok_or(Error::InvalidType(value, String::from("object")))?;
+            .ok_or_else(|| Error::InvalidType(value, String::from("object")))?;
 
         for (key, validator) in &self.key_validators {
             let inner_value = object
                 .get(key)
-                .ok_or(Error::MissingObjectKey(value, key.clone()))?;
+                .ok_or_else(|| Error::MissingObjectKey(value, key.clone()))?;
 
             validator.validate(inner_value)?
         }
@@ -33,7 +33,7 @@ impl ValidatorBase for ObjectValidator {
             for (key, value) in object {
                 self.key_validators
                     .get(key)
-                    .ok_or(Error::UnexpectedObjectKey(value, key.clone()))
+                    .ok_or_else(|| Error::UnexpectedObjectKey(value, key.clone()))
                     .map(|_| ())?
             }
         }
@@ -52,19 +52,26 @@ mod tests {
     #[test]
     fn valid() {
         let mut key_validators: HashMap<String, Box<dyn Validator>> = HashMap::new();
-        key_validators.insert(String::from("key"), validators::string(|_| Ok(())));
+        key_validators.insert(
+            String::from("key"),
+            Box::new(validators::string(|_| Ok(()))),
+        );
+        key_validators.insert(String::from("key1"), Box::new(validators::any()));
 
         let validator = super::object(key_validators);
         assert_eq!(
             Ok(()),
-            validator.validate(&serde_json::json!({"key": "val"}))
+            validator.validate(&serde_json::json!({"key": "val", "key1": null}))
         );
     }
 
     #[test]
     fn missing_key() {
         let mut key_validators: HashMap<String, Box<dyn Validator>> = HashMap::new();
-        key_validators.insert(String::from("key"), validators::string(|_| Ok(())));
+        key_validators.insert(
+            String::from("key"),
+            Box::new(validators::string(|_| Ok(()))),
+        );
 
         let validator = super::object(key_validators);
         assert!(matches!(
