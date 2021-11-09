@@ -1,4 +1,4 @@
-use crate::{Error, Validator, Value};
+use crate::{Error, Validator, ValidatorBase, Value};
 use std::fmt::Debug;
 
 mod object;
@@ -13,7 +13,7 @@ pub fn any() -> Box<dyn Validator> {
 
 struct AnyValidator {}
 
-impl Validator for AnyValidator {
+impl ValidatorBase for AnyValidator {
     fn validate<'a>(&self, _: &'a Value) -> Result<(), Error<'a>> {
         Ok(())
     }
@@ -33,7 +33,7 @@ where
     expected: T,
 }
 
-impl<T> Validator for EqValidator<T>
+impl<T> ValidatorBase for EqValidator<T>
 where
     T: Into<Value> + Clone + Debug,
 {

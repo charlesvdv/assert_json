@@ -12,9 +12,37 @@ pub enum Error<'a> {
     UnexpectedObjectKey(&'a Value, String),
 }
 
-pub trait Validator {
+pub trait ValidatorBase {
     fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>>;
 }
+
+pub trait Validator: ValidatorBase {
+    fn and(self, validator: Box<dyn Validator>) -> And<Self>
+    where
+        Self: Sized,
+    {
+        And {
+            first: self,
+            second: validator,
+        }
+    }
+}
+
+pub struct And<T> {
+    first: T,
+    second: Box<dyn Validator>,
+}
+
+impl<T> ValidatorBase for And<T>
+where
+    T: Validator,
+{
+    fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>> {
+        self.first.validate(value).and(self.second.validate(value))
+    }
+}
+
+impl<T: ValidatorBase> Validator for T {}
 
 pub mod validators;
 #[macro_use]

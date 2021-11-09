@@ -1,4 +1,4 @@
-use crate::{Error, Validator, Value};
+use crate::{Error, Validator, ValidatorBase, Value};
 use std::collections::HashMap;
 
 pub fn object(key_validators: HashMap<String, Box<dyn Validator>>) -> Box<dyn Validator> {
@@ -13,7 +13,7 @@ struct ObjectValidator {
     strict: bool,
 }
 
-impl Validator for ObjectValidator {
+impl ValidatorBase for ObjectValidator {
     fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>> {
         let object = value
             .as_object()

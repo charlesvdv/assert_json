@@ -1,4 +1,4 @@
-use crate::{Error, Validator, Value};
+use crate::{Error, Validator, ValidatorBase, Value};
 
 pub fn string<F>(predicate: F) -> Box<dyn Validator>
 where
@@ -72,7 +72,7 @@ where
     predicate: F,
 }
 
-impl<T, F> Validator for PrimitiveValidator<T, F>
+impl<T, F> ValidatorBase for PrimitiveValidator<T, F>
 where
     F: Fn(&T) -> Result<(), String>,
 {
