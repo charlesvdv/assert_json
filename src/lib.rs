@@ -15,9 +15,10 @@ pub enum Error<'a> {
 pub trait Validator {
     fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>>;
 
-    fn and(self, validator: Box<dyn Validator>) -> And<Self>
+    fn and<T>(self, validator: T) -> And<Self, T>
     where
         Self: Sized,
+        T: Validator,
     {
         And {
             first: self,
@@ -26,14 +27,15 @@ pub trait Validator {
     }
 }
 
-pub struct And<T> {
+pub struct And<T, U> {
     first: T,
-    second: Box<dyn Validator>,
+    second: U,
 }
 
-impl<T> Validator for And<T>
+impl<T, U> Validator for And<T, U>
 where
     T: Validator,
+    U: Validator,
 {
     fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>> {
         self.first.validate(value).and(self.second.validate(value))

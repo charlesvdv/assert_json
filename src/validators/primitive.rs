@@ -6,7 +6,7 @@ where
 {
     PrimitiveValidator {
         typename: String::from("string"),
-        extract: Box::new(|val: &Value| val.as_str().map(String::from)),
+        extract: |val| val.as_str().map(String::from),
         predicate,
     }
 }
@@ -14,7 +14,7 @@ where
 pub fn null() -> impl Validator {
     PrimitiveValidator {
         typename: String::from("null"),
-        extract: Box::new(|val| val.as_null()),
+        extract: |val| val.as_null(),
         predicate: |_| Ok(()),
     }
 }
@@ -25,7 +25,7 @@ where
 {
     PrimitiveValidator {
         typename: String::from("bool"),
-        extract: Box::new(|val| val.as_bool()),
+        extract: |val| val.as_bool(),
         predicate,
     }
 }
@@ -36,7 +36,7 @@ where
 {
     PrimitiveValidator {
         typename: String::from("i64"),
-        extract: Box::new(|val| val.as_i64()),
+        extract: |val| val.as_i64(),
         predicate,
     }
 }
@@ -47,7 +47,7 @@ where
 {
     PrimitiveValidator {
         typename: String::from("u64"),
-        extract: Box::new(|val| val.as_u64()),
+        extract: |val| val.as_u64(),
         predicate,
     }
 }
@@ -58,23 +58,25 @@ where
 {
     PrimitiveValidator {
         typename: String::from("f64"),
-        extract: Box::new(|val| val.as_f64()),
+        extract: |val| val.as_f64(),
         predicate,
     }
 }
 
-struct PrimitiveValidator<T, F>
+struct PrimitiveValidator<T, F, G>
 where
     F: Fn(&T) -> Result<(), String>,
+    G: Fn(&Value) -> Option<T>,
 {
     typename: String,
-    extract: Box<dyn Fn(&Value) -> Option<T>>,
+    extract: G,
     predicate: F,
 }
 
-impl<T, F> Validator for PrimitiveValidator<T, F>
+impl<T, F, G> Validator for PrimitiveValidator<T, F, G>
 where
     F: Fn(&T) -> Result<(), String>,
+    G: Fn(&Value) -> Option<T>,
 {
     fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>> {
         let val = (self.extract)(value)

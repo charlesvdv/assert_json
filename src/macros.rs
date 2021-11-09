@@ -226,7 +226,7 @@ mod test {
     fn assert_json_validator_with_and() {
         assert_json!(
             r#""test""#,
-            crate::validators::any().and(Box::new(crate::validators::eq(String::from("test"))))
+            crate::validators::any().and(crate::validators::eq(String::from("test")))
         );
     }
 
