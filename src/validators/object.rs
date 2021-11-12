@@ -8,6 +8,13 @@ pub fn object(key_validators: HashMap<String, Box<dyn Validator>>) -> Box<dyn Va
     })
 }
 
+pub fn object_empty() -> impl Validator {
+    ObjectValidator {
+        key_validators: HashMap::new(),
+        strict: true,
+    }
+}
+
 struct ObjectValidator {
     key_validators: HashMap<String, Box<dyn Validator>>,
     strict: bool,

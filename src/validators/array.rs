@@ -15,6 +15,10 @@ pub fn array_size(expected_size: usize) -> impl Validator {
     }
 }
 
+pub fn array_empty() -> impl Validator {
+    ArrayValidator { validators: vec![] }
+}
+
 struct ArrayValidator {
     validators: Vec<Box<dyn Validator>>,
 }
