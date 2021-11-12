@@ -1,9 +1,11 @@
 use crate::{Error, Validator, Value};
 use std::fmt::Debug;
 
+mod array;
 mod object;
 mod primitive;
 
+pub use array::*;
 pub use object::*;
 pub use primitive::*;
 
