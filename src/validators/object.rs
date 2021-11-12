@@ -1,11 +1,11 @@
 use crate::{Error, Validator, Value};
 use std::collections::HashMap;
 
-pub fn object(key_validators: HashMap<String, Box<dyn Validator>>) -> Box<dyn Validator> {
-    Box::new(ObjectValidator {
+pub fn object(key_validators: HashMap<String, Box<dyn Validator>>) -> impl Validator {
+    ObjectValidator {
         key_validators,
         strict: false,
-    })
+    }
 }
 
 pub fn object_empty() -> impl Validator {

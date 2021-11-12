@@ -111,7 +111,7 @@ macro_rules! expand_json_validator {
 
     // Next value is a map.
     (@object $object:ident ($($key:tt)+) (: {$($map:tt)*} $($rest:tt)*) $copy:tt) => {
-        expand_json_validator!(@object $object [$($key)+] (expand_json_validator!({$($map)*})) $($rest)*);
+        expand_json_validator!(@object $object [$($key)+] (Box::new(expand_json_validator!({$($map)*}))) $($rest)*);
     };
 
     // Next value is an expression followed by comma.
@@ -179,7 +179,7 @@ macro_rules! expand_json_validator {
 
     ({ $($tt:tt)+ }) => {
         validators::object({
-            let mut object = std::collections::HashMap::new();
+            let mut object: std::collections::HashMap<String, Box<dyn Validator>> = std::collections::HashMap::new();
             expand_json_validator!(@object object () ($($tt)+) ($($tt)+));
             object
         })
