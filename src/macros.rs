@@ -1,66 +1,17 @@
 #[macro_export]
 macro_rules! assert_json {
     ($val:expr , $($validator:tt)+) => ({
-        use $crate::validators;
-        use $crate::{Validator};
-
-        struct Input(crate::Value);
-
-        impl From<&str> for Input {
-            fn from(str_input: &str) -> Input {
-                let value = serde_json::from_str(str_input)
-                    .expect("failed to parse JSON");
-                Input(value)
-            }
-        }
-
-        impl From<crate::Value> for Input {
-            fn from(value: crate::Value) -> Input {
-                Input(value)
-            }
-        }
-
-        struct ValidatorInput(Box<dyn Validator>);
-
-        impl_from_validator_input_default!(String, bool, u8, u16, u32, u64, usize,
-            i8, i16, i32, i64, isize, f32, f64);
-
-        impl From<&str> for ValidatorInput {
-            fn from(str_input: &str) -> Self {
-                ValidatorInput(Box::new(validators::eq(String::from(str_input))))
-            }
-        }
-
-        impl<T> From<T> for ValidatorInput where T: Validator + 'static {
-            fn from(validator: T) -> Self {
-                ValidatorInput(Box::new(validator))
-            }
-        }
+        #[allow(unused_imports)]
+        use $crate::Validator;
+        use $crate::macros_utils::*;
 
         let validator = expand_json_validator!($($validator)+);
-        let input: Input = $val.into();
-        let result = validator.validate(&input.0);
+        let input = Into::<Input>::into($val).get();
+        let result = validator.validate(&input);
         if let Err(error) = result {
             panic!("assertion failed: json: {}", error)
         }
     });
-}
-
-#[macro_export]
-#[doc(hidden)]
-macro_rules! impl_from_validator_input_default {
-    (
-        $($ty:ty),*
-    ) => {
-        $(
-            impl From<$ty> for ValidatorInput {
-                #[inline]
-                fn from(u: $ty) -> Self {
-                    ValidatorInput(Box::new(validators::eq(u)))
-                }
-            }
-        )*
-    };
 }
 
 /// Heavily inspired by https://github.com/serde-rs/json.
@@ -210,28 +161,28 @@ macro_rules! expand_json_validator {
     // *******************************************************************
 
     (null) => {
-        validators::null()
+        $crate::validators::null()
     };
 
     ([]) => {
-        validators::array_empty()
+        $crate::validators::array_empty()
     };
 
     ([ $($tt:tt)+ ]) => {
         // {
         //     let mut validators_array = vec![];
         // }
-        validators::array(expand_json_validator!(@array [] $($tt)+))
+        $crate::validators::array(expand_json_validator!(@array [] $($tt)+))
         // $crate::Value::Array(json_internal!(@array [] $($tt)+))
     };
 
     ({}) => {
-        validators::object(std::collections::HashMap::new())
+        $crate::validators::object(std::collections::HashMap::new())
     };
 
     ({ $($tt:tt)+ }) => {
-        validators::object({
-            let mut object: std::collections::HashMap<String, Box<dyn Validator>> = std::collections::HashMap::new();
+        $crate::validators::object({
+            let mut object: std::collections::HashMap<String, Box<dyn $crate::Validator>> = std::collections::HashMap::new();
             expand_json_validator!(@object object () ($($tt)+) ($($tt)+));
             object
         })
@@ -240,7 +191,7 @@ macro_rules! expand_json_validator {
     ($other:expr) => {
         {
             let validator: ValidatorInput = $other.into();
-            validator.0
+            validator.get()
         }
     };
 }
