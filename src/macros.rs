@@ -22,7 +22,8 @@ macro_rules! assert_json {
 
         struct ValidatorInput(Box<dyn Validator>);
 
-        impl_from_validator_input_default!(String, bool, u8, u16, u32, u64, usize, i8, i16, i32, i64, isize);
+        impl_from_validator_input_default!(String, bool, u8, u16, u32, u64, usize,
+            i8, i16, i32, i64, isize, f32, f64);
 
         impl From<&str> for ValidatorInput {
             fn from(str_input: &str) -> Self {
@@ -68,6 +69,55 @@ macro_rules! impl_from_validator_input_default {
 #[doc(hidden)]
 macro_rules! expand_json_validator {
     // *******************************************************************
+    // array handling
+    // *******************************************************************
+
+    // Done with trailing comma.
+    (@array [$($elems:expr,)*]) => {
+        expand_json_vec_validator![$($elems,)*]
+    };
+
+    // Done without trailing comma.
+    (@array [$($elems:expr),*]) => {
+        expand_json_vec_validator![$($elems),*]
+    };
+
+    // Next element is `null`.
+    (@array [$($elems:expr,)*] null $($rest:tt)*) => {
+        expand_json_validator!(@array [$($elems,)* Box::new(expand_json_validator!(null))] $($rest)*)
+    };
+
+    // Next element is an array.
+    (@array [$($elems:expr,)*] [$($array:tt)*] $($rest:tt)*) => {
+        expand_json_validator!(@array [$($elems,)* Box::new(expand_json_validator!([$($array)*]))] $($rest)*)
+    };
+
+    // Next element is a map.
+    (@array [$($elems:expr,)*] {$($map:tt)*} $($rest:tt)*) => {
+        expand_json_validator!(@array [$($elems,)* Box::new(expand_json_validator!({$($map)*}))] $($rest)*)
+    };
+
+    // Next element is an expression followed by comma.
+    (@array [$($elems:expr,)*] $next:expr, $($rest:tt)*) => {
+        expand_json_validator!(@array [$($elems,)* expand_json_validator!($next),] $($rest)*)
+    };
+
+    // Last element is an expression with no trailing comma.
+    (@array [$($elems:expr,)*] $last:expr) => {
+        expand_json_validator!(@array [$($elems,)* expand_json_validator!($last)])
+    };
+
+    // Comma after the most recent element.
+    (@array [$($elems:expr),*] , $($rest:tt)*) => {
+        expand_json_validator!(@array [$($elems,)*] $($rest)*)
+    };
+
+    // Unexpected token after most recent element.
+    (@array [$($elems:expr),*] $unexpected:tt $($rest:tt)*) => {
+        json_unexpected!($unexpected)
+    };
+
+    // *******************************************************************
     // object handling
     // *******************************************************************
 
@@ -91,22 +141,12 @@ macro_rules! expand_json_validator {
 
     // Next value is `null`.
     (@object $object:ident ($($key:tt)+) (: null $($rest:tt)*) $copy:tt) => {
-        expand_json_validator!(@object $object [$($key)+] (expand_json_validator!(null)) $($rest)*);
-    };
-
-    // Next value is `true`.
-    (@object $object:ident ($($key:tt)+) (: true $($rest:tt)*) $copy:tt) => {
-        expand_json_validator!(@object $object [$($key)+] (expand_json_validator!(true)) $($rest)*);
-    };
-
-    // Next value is `false`.
-    (@object $object:ident ($($key:tt)+) (: false $($rest:tt)*) $copy:tt) => {
-        expand_json_validator!(@object $object [$($key)+] (expand_json_validator!(false)) $($rest)*);
+        expand_json_validator!(@object $object [$($key)+] (Box::new(expand_json_validator!(null))) $($rest)*);
     };
 
     // Next value is an array.
     (@object $object:ident ($($key:tt)+) (: [$($array:tt)*] $($rest:tt)*) $copy:tt) => {
-        expand_json_validator!(@object $object [$($key)+] (expand_json_validator!([$($array)*])) $($rest)*);
+        expand_json_validator!(@object $object [$($key)+] (Box::new(expand_json_validator!([$($array)*]))) $($rest)*);
     };
 
     // Next value is a map.
@@ -173,8 +213,20 @@ macro_rules! expand_json_validator {
         validators::null()
     };
 
+    ([]) => {
+        validators::array_empty()
+    };
+
+    ([ $($tt:tt)+ ]) => {
+        // {
+        //     let mut validators_array = vec![];
+        // }
+        validators::array(expand_json_validator!(@array [] $($tt)+))
+        // $crate::Value::Array(json_internal!(@array [] $($tt)+))
+    };
+
     ({}) => {
-        validators::object(HashMap::new())
+        validators::object(std::collections::HashMap::new())
     };
 
     ({ $($tt:tt)+ }) => {
@@ -190,6 +242,17 @@ macro_rules! expand_json_validator {
             let validator: ValidatorInput = $other.into();
             validator.0
         }
+    };
+}
+
+// The expand_json_validator macro above cannot invoke vec directly because it uses
+// local_inner_macros. A vec invocation there would resolve to $crate::vec.
+// Instead invoke vec here outside of local_inner_macros.
+#[macro_export]
+#[doc(hidden)]
+macro_rules! expand_json_vec_validator {
+    ($($content:tt)*) => {
+        vec![$($content)*]
     };
 }
 
@@ -218,7 +281,103 @@ mod test {
     }
 
     #[test]
-    fn assert_json_validator() {
+    fn assert_json_number() {
+        assert_json!("23", 23);
+        assert_json!("2.3", 2.3);
+    }
+
+    #[test]
+    fn assert_json_bool() {
+        assert_json!("true", true);
+        assert_json!("false", false);
+    }
+
+    #[test]
+    fn assert_json_string() {
+        assert_json!(r#""str""#, "str")
+    }
+
+    #[test]
+    fn assert_json_object_empty() {
+        assert_json!("{}", {});
+    }
+
+    #[test]
+    fn assert_json_object() {
+        assert_json!(r#"{
+                "null": null,
+                "bool_true": true,
+                "bool_false": false,
+                "num_int": -6,
+                "num_float": 2.4,
+                "str": "test",
+                "inner_obj": {
+                    "test": "hello"
+                },
+                "inner_empty_obj": {},
+                "inner_array": [1, 3],
+                "inner_empty_arr": []
+            }"#,
+            {
+                "null": null,
+                "bool_true": true,
+                "bool_false": false,
+                "num_int": -6,
+                "num_float": 2.4,
+                "str": "test",
+                "inner_obj": {
+                    "test": "hello"
+                },
+                "inner_empty_obj": {},
+                "inner_array": [1, 3],
+                "inner_empty_arr": [],
+            }
+        );
+    }
+
+    #[test]
+    fn assert_json_array_empty() {
+        assert_json!("[]", []);
+    }
+
+    #[test]
+    #[should_panic]
+    fn assert_json_array_empty_err() {
+        assert_json!("[null]", []);
+    }
+
+    #[test]
+    fn assert_json_array() {
+        assert_json!(
+            r#"[
+                null,
+                true,
+                false,
+                8,
+                8.9,
+                "str",
+                { "key": null },
+                {},
+                [false, "hello"],
+                []
+            ]"#,
+            [
+                null,
+                true,
+                false,
+                8,
+                8.9,
+                "str",
+                { "key": null },
+                {},
+                [false, "hello"],
+                []
+            ]
+        );
+    }
+
+    #[test]
+    fn assert_json_custom_validator() {
         assert_json!("null", crate::validators::any());
     }
 
@@ -237,45 +396,15 @@ mod test {
     }
 
     #[test]
-    fn assert_simple_object_bool_value() {
-        assert_json!(r#"{"key": true}"#, { "key": true });
-    }
-
-    #[test]
-    fn assert_simple_object_str_value() {
-        assert_json!(r#"{"key": "value"}"#, { "key": "value" });
-    }
-
-    #[test]
-    fn assert_json_string() {
-        assert_json!(r#""test""#, "test");
-    }
-
-    #[test]
-    fn assert_json_number() {
-        assert_json!("15", 15);
-    }
-
-    #[test]
-    fn assert_json_nested_object() {
-        let json = serde_json::json!({
-            "key": {
-                "nestedkey": "nestedvalue"
-            },
-            "anotherkey": "anothervalue"
-        });
-        assert_json!(json, {
-            "key": {
-                "nestedkey": "nestedvalue"
-            },
-            "anotherkey": "anothervalue"
-        });
-    }
-
-    #[test]
     fn assert_json_is_expression() {
         assert_json!("null", null) // the missing ";" is normal
                                    // this is to test if the the assert_json macros
                                    // can be used as an expression like assert_eq!
+    }
+
+    #[test]
+    fn assert_json_with_variable() {
+        let num = 5;
+        assert_json!("5", num);
     }
 }
