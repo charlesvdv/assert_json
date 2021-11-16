@@ -5,7 +5,7 @@ macro_rules! assert_json {
         use $crate::Validator;
         use $crate::macros_utils::*;
 
-        let validator = expand_json_validator!($($validator)+);
+        let validator = $crate::expand_json_validator!($($validator)+);
         let input = Into::<Input>::into($val).get();
         let result = validator.validate(&input);
         if let Err(error) = result {
@@ -25,47 +25,47 @@ macro_rules! expand_json_validator {
 
     // Done with trailing comma.
     (@array [$($elems:expr,)*]) => {
-        expand_json_vec_validator![$($elems,)*]
+        $crate::expand_json_vec_validator![$($elems,)*]
     };
 
     // Done without trailing comma.
     (@array [$($elems:expr),*]) => {
-        expand_json_vec_validator![$($elems),*]
+        $crate::expand_json_vec_validator![$($elems),*]
     };
 
     // Next element is `null`.
     (@array [$($elems:expr,)*] null $($rest:tt)*) => {
-        expand_json_validator!(@array [$($elems,)* Box::new(expand_json_validator!(null))] $($rest)*)
+        $crate::expand_json_validator!(@array [$($elems,)* Box::new($crate::expand_json_validator!(null))] $($rest)*)
     };
 
     // Next element is an array.
     (@array [$($elems:expr,)*] [$($array:tt)*] $($rest:tt)*) => {
-        expand_json_validator!(@array [$($elems,)* Box::new(expand_json_validator!([$($array)*]))] $($rest)*)
+        $crate::expand_json_validator!(@array [$($elems,)* Box::new($crate::expand_json_validator!([$($array)*]))] $($rest)*)
     };
 
     // Next element is a map.
     (@array [$($elems:expr,)*] {$($map:tt)*} $($rest:tt)*) => {
-        expand_json_validator!(@array [$($elems,)* Box::new(expand_json_validator!({$($map)*}))] $($rest)*)
+        $crate::expand_json_validator!(@array [$($elems,)* Box::new($crate::expand_json_validator!({$($map)*}))] $($rest)*)
     };
 
     // Next element is an expression followed by comma.
     (@array [$($elems:expr,)*] $next:expr, $($rest:tt)*) => {
-        expand_json_validator!(@array [$($elems,)* expand_json_validator!($next),] $($rest)*)
+        $crate::expand_json_validator!(@array [$($elems,)* $crate::expand_json_validator!($next),] $($rest)*)
     };
 
     // Last element is an expression with no trailing comma.
     (@array [$($elems:expr,)*] $last:expr) => {
-        expand_json_validator!(@array [$($elems,)* expand_json_validator!($last)])
+        $crate::expand_json_validator!(@array [$($elems,)* $crate::expand_json_validator!($last)])
     };
 
     // Comma after the most recent element.
     (@array [$($elems:expr),*] , $($rest:tt)*) => {
-        expand_json_validator!(@array [$($elems,)*] $($rest)*)
+        $crate::expand_json_validator!(@array [$($elems,)*] $($rest)*)
     };
 
     // Unexpected token after most recent element.
     (@array [$($elems:expr),*] $unexpected:tt $($rest:tt)*) => {
-        json_unexpected!($unexpected)
+        $crate::json_unexpected!($unexpected)
     };
 
     // *******************************************************************
@@ -77,12 +77,12 @@ macro_rules! expand_json_validator {
     // Insert the current entry followed by trailing comma.
     (@object $object:ident [$($key:tt)+] ($value:expr) , $($rest:tt)*) => {
         let _ = $object.insert(($($key)+).into(), $value);
-        expand_json_validator!(@object $object () ($($rest)*) ($($rest)*));
+        $crate::expand_json_validator!(@object $object () ($($rest)*) ($($rest)*));
     };
 
     // Current entry followed by unexpected token.
     (@object $object:ident [$($key:tt)+] ($value:expr) $unexpected:tt $($rest:tt)*) => {
-        json_unexpected!($unexpected);
+        $crate::json_unexpected!($unexpected);
     };
 
     // Insert the last entry without trailing comma.
@@ -92,68 +92,68 @@ macro_rules! expand_json_validator {
 
     // Next value is `null`.
     (@object $object:ident ($($key:tt)+) (: null $($rest:tt)*) $copy:tt) => {
-        expand_json_validator!(@object $object [$($key)+] (Box::new(expand_json_validator!(null))) $($rest)*);
+        $crate::expand_json_validator!(@object $object [$($key)+] (Box::new($crate::expand_json_validator!(null))) $($rest)*);
     };
 
     // Next value is an array.
     (@object $object:ident ($($key:tt)+) (: [$($array:tt)*] $($rest:tt)*) $copy:tt) => {
-        expand_json_validator!(@object $object [$($key)+] (Box::new(expand_json_validator!([$($array)*]))) $($rest)*);
+        $crate::expand_json_validator!(@object $object [$($key)+] (Box::new($crate::expand_json_validator!([$($array)*]))) $($rest)*);
     };
 
     // Next value is a map.
     (@object $object:ident ($($key:tt)+) (: {$($map:tt)*} $($rest:tt)*) $copy:tt) => {
-        expand_json_validator!(@object $object [$($key)+] (Box::new(expand_json_validator!({$($map)*}))) $($rest)*);
+        $crate::expand_json_validator!(@object $object [$($key)+] (Box::new($crate::expand_json_validator!({$($map)*}))) $($rest)*);
     };
 
     // Next value is an expression followed by comma.
     (@object $object:ident ($($key:tt)+) (: $value:expr , $($rest:tt)*) $copy:tt) => {
-        expand_json_validator!(@object $object [$($key)+] (expand_json_validator!($value)) , $($rest)*);
+        $crate::expand_json_validator!(@object $object [$($key)+] ($crate::expand_json_validator!($value)) , $($rest)*);
     };
 
     // Last value is an expression with no trailing comma.
     (@object $object:ident ($($key:tt)+) (: $value:expr) $copy:tt) => {
-        expand_json_validator!(@object $object [$($key)+] (expand_json_validator!($value)));
+        $crate::expand_json_validator!(@object $object [$($key)+] ($crate::expand_json_validator!($value)));
     };
 
     // Missing value for last entry. Trigger a reasonable error message.
     (@object $object:ident ($($key:tt)+) (:) $copy:tt) => {
         // "unexpected end of macro invocation"
-        expand_json_validator!();
+        $crate::expand_json_validator!();
     };
 
     // Missing colon and value for last entry. Trigger a reasonable error
     // message.
     (@object $object:ident ($($key:tt)+) () $copy:tt) => {
         // "unexpected end of macro invocation"
-        expand_json_validator!();
+        $crate::expand_json_validator!();
     };
 
     // Misplaced colon. Trigger a reasonable error message.
     (@object $object:ident () (: $($rest:tt)*) ($colon:tt $($copy:tt)*)) => {
         // Takes no arguments so "no rules expected the token `:`".
-        json_unexpected!($colon);
+        $crate::json_unexpected!($colon);
     };
 
     // Found a comma inside a key. Trigger a reasonable error message.
     (@object $object:ident ($($key:tt)*) (, $($rest:tt)*) ($comma:tt $($copy:tt)*)) => {
         // Takes no arguments so "no rules expected the token `,`".
-        json_unexpected!($comma);
+        $crate::json_unexpected!($comma);
     };
 
     // Key is fully parenthesized. This avoids clippy double_parens false
     // positives because the parenthesization may be necessary here.
     (@object $object:ident () (($key:expr) : $($rest:tt)*) $copy:tt) => {
-        expand_json_validator!(@object $object ($key) (: $($rest)*) (: $($rest)*));
+        $crate::expand_json_validator!(@object $object ($key) (: $($rest)*) (: $($rest)*));
     };
 
     // Refuse to absorb colon token into key expression.
     (@object $object:ident ($($key:tt)*) (: $($unexpected:tt)+) $copy:tt) => {
-        json_expect_expr_comma!($($unexpected)+);
+        $crate::json_expect_expr_comma!($($unexpected)+);
     };
 
     // Munch a token into the current key.
     (@object $object:ident ($($key:tt)*) ($tt:tt $($rest:tt)*) $copy:tt) => {
-        expand_json_validator!(@object $object ($($key)* $tt) ($($rest)*) ($($rest)*));
+        $crate::expand_json_validator!(@object $object ($($key)* $tt) ($($rest)*) ($($rest)*));
     };
 
     // *******************************************************************
@@ -172,7 +172,7 @@ macro_rules! expand_json_validator {
         // {
         //     let mut validators_array = vec![];
         // }
-        $crate::validators::array(expand_json_validator!(@array [] $($tt)+))
+        $crate::validators::array($crate::expand_json_validator!(@array [] $($tt)+))
         // $crate::Value::Array(json_internal!(@array [] $($tt)+))
     };
 
@@ -183,7 +183,7 @@ macro_rules! expand_json_validator {
     ({ $($tt:tt)+ }) => {
         $crate::validators::object({
             let mut object: std::collections::HashMap<String, Box<dyn $crate::Validator>> = std::collections::HashMap::new();
-            expand_json_validator!(@object object () ($($tt)+) ($($tt)+));
+            $crate::expand_json_validator!(@object object () ($($tt)+) ($($tt)+));
             object
         })
     };
