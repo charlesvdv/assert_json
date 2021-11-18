@@ -9,7 +9,7 @@ macro_rules! assert_json {
         let input = Into::<Input>::into($val).get();
         let result = validator.validate(&input);
         if let Err(error) = result {
-            panic!("assertion failed: json: {}", error)
+            panic!("{}", format_error(&input, error));
         }
     });
 }

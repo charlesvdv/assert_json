@@ -42,6 +42,17 @@ pub enum Error<'a> {
     UnexpectedObjectKey(&'a Value, String),
 }
 
+impl<'a> Error<'a> {
+    fn location(&self) -> &'a Value {
+        match self {
+            Error::InvalidType(loc, _) => loc,
+            Error::InvalidValue(loc, _) => loc,
+            Error::MissingObjectKey(loc, _) => loc,
+            Error::UnexpectedObjectKey(loc, _) => loc,
+        }
+    }
+}
+
 /// Define a validation on a given JSON [Value].
 /// Validator can also be chained with the [Validator::and] method.
 pub trait Validator {

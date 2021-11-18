@@ -1,5 +1,12 @@
+use codespan_reporting::diagnostic::{Diagnostic, Label};
+use codespan_reporting::files::SimpleFiles;
+use codespan_reporting::term;
+use codespan_reporting::term::termcolor;
+
 use crate::validators;
-use crate::{Validator, Value};
+use crate::{Error, Validator, Value};
+use std::collections::BTreeMap;
+use std::ops::Range;
 
 pub struct Input(Value);
 
@@ -62,5 +69,167 @@ where
 {
     fn from(validator: T) -> Self {
         ValidatorInput(Box::new(validator))
+    }
+}
+
+pub fn format_error<'a>(json: &'a Value, error: Error<'a>) -> String {
+    let serializer = SpanSerializer::serialize(json);
+
+    let mut files = SimpleFiles::new();
+    let file = files.add("", serializer.serialized_json());
+
+    let diagnostic = Diagnostic::error()
+        .with_message("Invalid JSON")
+        .with_labels(vec![Label::primary(
+            file,
+            serializer.span(error.location()),
+        )
+        .with_message(error.to_string())]);
+
+    let output = Vec::<u8>::new();
+    let mut writer = termcolor::Ansi::new(output);
+    let config = term::Config::default();
+
+    term::emit(&mut writer, &config, &files, &diagnostic).unwrap();
+
+    String::from_utf8(writer.into_inner()).unwrap()
+}
+
+/// Serialize a JSON [Value] and keeps the span information of each
+/// elements.
+#[derive(Default)]
+struct SpanSerializer {
+    spans: BTreeMap<*const Value, Range<usize>>,
+    json: String,
+    current_ident: usize,
+}
+
+impl SpanSerializer {
+    fn serialize(input: &Value) -> SpanSerializer {
+        let mut serializer = SpanSerializer::default();
+        serializer.serialize_recursive(input);
+        serializer
+    }
+
+    fn serialize_recursive(&mut self, input: &Value) {
+        let start = self.json.len();
+
+        match input {
+            serde_json::Value::Null => self.json.push_str("null"),
+            serde_json::Value::Bool(bool_val) => self.json.push_str(&format!("{}", bool_val)),
+            serde_json::Value::Number(num_val) => {
+                self.json.push_str(&num_val.to_string());
+            }
+            serde_json::Value::String(str_val) => self.json.push_str(&format!("\"{}\"", str_val)),
+            serde_json::Value::Array(arr_val) => {
+                self.json.push_str("[\n");
+                self.current_ident += 1;
+                for (index, item) in arr_val.iter().enumerate() {
+                    if index != 0 {
+                        self.json.push_str(",\n");
+                    }
+                    self.ident();
+                    self.serialize_recursive(item);
+                }
+                self.json.push('\n');
+                self.current_ident -= 1;
+                self.ident();
+                self.json.push(']')
+            }
+            serde_json::Value::Object(obj_val) => {
+                self.json.push_str("{\n");
+                self.current_ident += 1;
+                for (index, (key, value)) in obj_val.iter().enumerate() {
+                    if index != 0 {
+                        self.json.push_str(",\n");
+                    }
+                    self.ident();
+                    self.json.push_str(&format!("\"{}\": ", key));
+                    self.serialize_recursive(value);
+                }
+                self.json.push('\n');
+                self.current_ident -= 1;
+                self.ident();
+                self.json.push('}')
+            }
+        }
+
+        let end = self.json.len();
+        self.spans.insert(input as *const Value, start..end);
+    }
+
+    fn ident(&mut self) {
+        self.json.push_str(&" ".repeat(self.current_ident * 4));
+    }
+
+    fn serialized_json(&self) -> &str {
+        &self.json
+    }
+
+    fn span(&self, val: &Value) -> Range<usize> {
+        self.spans
+            .get(&(val as *const Value))
+            .expect("expected span")
+            .clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SpanSerializer;
+    use crate::Value;
+    use indoc::indoc;
+
+    #[test]
+    fn serializer_primitive() {
+        let value = Value::Null;
+
+        let serializer = SpanSerializer::serialize(&value);
+        assert_eq!("null", serializer.serialized_json());
+        assert_eq!(0..4, serializer.span(&value));
+    }
+
+    #[test]
+    fn serialize_object() {
+        let value = serde_json::json!({
+            "key": "value",
+            "key_2": 2.1,
+        });
+        let num_value = value.as_object().unwrap().get("key_2").unwrap();
+
+        let serializer = SpanSerializer::serialize(&value);
+        assert_eq!(
+            indoc! {r#"
+                {
+                    "key": "value",
+                    "key_2": 2.1
+                }"#},
+            serializer.serialized_json()
+        );
+        assert_eq!(35..38, serializer.span(num_value));
+    }
+
+    #[test]
+    fn serialize_array() {
+        let value = serde_json::json!([
+            null,
+            true,
+            {
+                "key": -5,
+            }
+        ]);
+
+        let serializer = SpanSerializer::serialize(&value);
+        assert_eq!(
+            indoc! {r#"
+                [
+                    null,
+                    true,
+                    {
+                        "key": -5
+                    }
+                ]"#},
+            serializer.serialized_json()
+        )
     }
 }
