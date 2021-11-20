@@ -1,3 +1,5 @@
+//! A easy and declarative way to test JSON input in Rust.
+//!
 //! [assert_json!] is a Rust macro heavily inspired by [serde_json::json!] macro.
 //! Instead of creating a JSON value from a JSON literal, [assert_json!] makes sure
 //! the JSON input conforms to the validation rules specified.

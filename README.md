@@ -1,6 +1,6 @@
 # assert_json
 
-A easy and declarative way to test JSON literal in Rust.
+A easy and declarative way to test JSON input in Rust.
 `assert_json` is a Rust macro heavily inspired by serde [json macro](https://docs.serde.rs/serde_json/macro.json.html).
 Instead of creating a JSON value from a JSON literal, `assert_json` makes sure
 the JSON input conforms to the validation rules specified.
