@@ -1,4 +1,4 @@
-use crate::{Error, Validator, Value};
+use crate::{get_value_type_id, Error, Validator, Value};
 use std::fmt::Debug;
 
 mod array;
@@ -40,7 +40,12 @@ where
     T: Into<Value> + Clone + Debug,
 {
     fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>> {
-        if value == &self.expected.clone().into() {
+        let expected_val = self.expected.clone().into();
+        if get_value_type_id(&expected_val) != get_value_type_id(value) {
+            return Err(Error::InvalidType(value, get_value_type_id(&expected_val)));
+        }
+
+        if value == &expected_val {
             Ok(())
         } else {
             Err(Error::InvalidValue(value, format!("{:?}", self.expected)))

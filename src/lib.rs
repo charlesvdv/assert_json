@@ -29,12 +29,23 @@
 /// A JSON-value. Used by the [Validator] trait.
 pub type Value = serde_json::Value;
 
+fn get_value_type_id(val: &Value) -> String {
+    match val {
+        serde_json::Value::Null => String::from("null"),
+        serde_json::Value::Bool(_) => String::from("bool"),
+        serde_json::Value::Number(_) => String::from("number"),
+        serde_json::Value::String(_) => String::from("string"),
+        serde_json::Value::Array(_) => String::from("array"),
+        serde_json::Value::Object(_) => String::from("object"),
+    }
+}
+
 /// Validation error
 #[derive(thiserror::Error, Debug, PartialEq)]
 pub enum Error<'a> {
-    #[error("Invalid type. Expected '{1}' got '{0}'.")]
+    #[error("Invalid type. Expected {} but got {}.", .1, get_value_type_id(.0))]
     InvalidType(&'a Value, String),
-    #[error("Invalid value: {1}")]
+    #[error("Invalid value. Expected {1} but got {0}.")]
     InvalidValue(&'a Value, String),
     #[error("Missing key '{1}' in object")]
     MissingObjectKey(&'a Value, String),
