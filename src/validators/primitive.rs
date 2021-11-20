@@ -1,5 +1,6 @@
 use crate::{Error, Validator, Value};
 
+/// Match if string match predicate.
 pub fn string<F>(predicate: F) -> impl Validator
 where
     F: Fn(&String) -> Result<(), String> + 'static,
@@ -11,6 +12,7 @@ where
     }
 }
 
+/// Match if null.
 pub fn null() -> impl Validator {
     PrimitiveValidator {
         typename: String::from("null"),
@@ -19,6 +21,7 @@ pub fn null() -> impl Validator {
     }
 }
 
+/// Match if bool match predicate.
 pub fn bool<F>(predicate: F) -> impl Validator
 where
     F: Fn(&bool) -> Result<(), String> + 'static,
@@ -30,6 +33,7 @@ where
     }
 }
 
+/// Match if number match predicate.
 pub fn i64<F>(predicate: F) -> impl Validator
 where
     F: Fn(&i64) -> Result<(), String> + 'static,
@@ -41,6 +45,7 @@ where
     }
 }
 
+/// Match if number match predicate.
 pub fn u64<F>(predicate: F) -> impl Validator
 where
     F: Fn(&u64) -> Result<(), String> + 'static,
@@ -52,6 +57,7 @@ where
     }
 }
 
+/// Match if number match predicate.
 pub fn f64<F>(predicate: F) -> impl Validator
 where
     F: Fn(&f64) -> Result<(), String> + 'static,

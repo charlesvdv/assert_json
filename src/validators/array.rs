@@ -1,12 +1,14 @@
 use crate::validators;
 use crate::{Error, Validator, Value};
 
+/// Match each array element to a specific validator.
 pub fn array(array_validators: Vec<Box<dyn Validator>>) -> impl Validator {
     ArrayValidator {
         validators: array_validators,
     }
 }
 
+/// Match the array size.
 pub fn array_size(expected_size: usize) -> impl Validator {
     ArrayValidator {
         validators: (0..expected_size)
@@ -15,6 +17,7 @@ pub fn array_size(expected_size: usize) -> impl Validator {
     }
 }
 
+/// Match empty array.
 pub fn array_empty() -> impl Validator {
     ArrayValidator { validators: vec![] }
 }
@@ -47,6 +50,7 @@ impl Validator for ArrayValidator {
     }
 }
 
+/// Match if each element match the validator
 pub fn array_for_each(validator: impl Validator) -> impl Validator {
     ArrayForEachValidator { validator }
 }

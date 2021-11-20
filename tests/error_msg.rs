@@ -1,4 +1,5 @@
 use assert_json::assert_json;
+use assert_json::validators;
 use indoc::indoc;
 
 macro_rules! assert_panic_output {
@@ -39,4 +40,34 @@ fn missing_object_key() {
             "missing_key": null,
         })
     )
+}
+
+#[test]
+fn test_readme_example() {
+    // If the error is updated, don't forget to update the README!
+    let expected_output = indoc! {r#"
+          │
+        4 │         "name": "incorrect name"
+          │                 ^^^^^^^^^^^^^^^^ Invalid value. Expected "charlesvdv" but got "incorrect name".
+    "#};
+    let json = r#"
+        {
+            "status": "success",
+            "result": {
+                "id": 5,
+                "name": "incorrect name"
+            }
+        }
+    "#;
+    assert_panic_output!(
+        expected_output,
+        assert_json!(json, {
+                "status": "success",
+                "result": {
+                    "id": validators::u64(|&v| if v > 0 { Ok(())} else { Err(String::from("id should be greater than 0")) }),
+                    "name": "charlesvdv",
+                }
+            }
+        )
+    );
 }

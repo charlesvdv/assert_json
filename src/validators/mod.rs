@@ -9,6 +9,9 @@ pub use array::*;
 pub use object::*;
 pub use primitive::*;
 
+/// Match any value.
+///
+/// It will never return an error.
 pub fn any() -> impl Validator {
     AnyValidator {}
 }
@@ -21,6 +24,7 @@ impl Validator for AnyValidator {
     }
 }
 
+/// Match a value equals the expected value.
 pub fn eq<T>(expected: T) -> impl Validator
 where
     T: Into<Value> + Clone + Debug + 'static,

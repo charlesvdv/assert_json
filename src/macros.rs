@@ -1,3 +1,7 @@
+/// Assert that a json value matches its validation rules
+///
+/// `$val` parameter can be either a string or a `assert_json::Value`.
+/// `validators` is the validation rule expressed as a JSON-like structure.
 #[macro_export]
 macro_rules! assert_json {
     ($val:expr , $($validator:tt)+) => ({

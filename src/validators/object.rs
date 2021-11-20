@@ -1,6 +1,10 @@
 use crate::{Error, Validator, Value};
 use std::collections::HashMap;
 
+/// Match if each key/value pair matches
+///
+/// Ignore key that are not specified. Use [object_strict] if you want to
+/// exactly match all the key/values.
 pub fn object(key_validators: HashMap<String, Box<dyn Validator>>) -> impl Validator {
     ObjectValidator {
         key_validators,
@@ -8,6 +12,15 @@ pub fn object(key_validators: HashMap<String, Box<dyn Validator>>) -> impl Valid
     }
 }
 
+/// Match if each key/value pairs matches. Fail if a key is missing in the validators.
+pub fn object_strict(key_validators: HashMap<String, Box<dyn Validator>>) -> impl Validator {
+    ObjectValidator {
+        key_validators,
+        strict: true,
+    }
+}
+
+/// Match if the object is empty.
 pub fn object_empty() -> impl Validator {
     ObjectValidator {
         key_validators: HashMap::new(),

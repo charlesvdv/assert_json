@@ -1,29 +1,36 @@
-//! Simple and declarative way for testing JSON
+//! [assert_json!] is a Rust macro heavily inspired by [serde_json::json!] macro.
+//! Instead of creating a JSON value from a JSON literal, [assert_json!] makes sure
+//! the JSON input conforms to the validation rules specified.
+//!
+//! [assert_json!] also output beautiful error message when a validation error occurs.
 //!
 //! ```
 //! # use assert_json::assert_json;
+//! # use assert_json::validators;
 //! #
-//! let key2_value = 2.0;
-//! // On the left, the raw JSON as a string. On the right, the validator parts
-//! assert_json!(r#"{ "key": "value", "key2": 2.0 }"#, {"key": "value", "key2": key2_value})
-//! ```
+//! #[test]
+//! fn test_json_ok() {
+//!     let json = r#"
+//!         {
+//!             "status": "success",
+//!             "result": {
+//!                 "id": 5,
+//!                 "name": "charlesvdv"
+//!             }
+//!         }
+//!     "#;
 //!
-//! [assert_json!] asserts a given JSON input matches the expected validation rules.
-//! The validation rules are given via a JSON-like structure. This JSON-like structure
-//! is expanded by the `assert_json!` macro into validation rules. `assert_json!` is
-//! heavily inspired by the serde [serde_json::json!] macro.
+//!     let name = "charlesvdv";
 //!
-//! Custom validators can also be used for more complex use-cases. A validator is implementing
-//! the [Validator] trait. For common use-cases, you can also see the functions in [validators]
-//! module.
-//!
-//! ```
-//! # use assert_json::assert_json;
-//! #
-//! use assert_json::validators;
-//!
-//! let id_validator = validators::u64(|&v| if v > 0 { Ok(()) } else { Err(format!("{} is lower than 0", v)) });
-//! assert_json!(r#"{ "id": 5, "username": "cvandevo" }"#, { "id": id_validator, "username": "cvandevo" })
+//!     assert_json!(json, {
+//!             "status": "success",
+//!             "result": {
+//!                 "id": validators::u64(|&v| if v > 0 { Ok(())} else { Err(String::from("id should be greater than 0")) }),
+//!                 "name": name,
+//!             }
+//!         }
+//!     );
+//! }
 //! ```
 
 /// A JSON-value. Used by the [Validator] trait.
@@ -64,8 +71,54 @@ impl<'a> Error<'a> {
     }
 }
 
-/// Define a validation on a given JSON [Value].
-/// Validator can also be chained with the [Validator::and] method.
+/// Abstract the validation action for [assert_json!] macro.
+///
+/// Any custom validation rule can be easily use in the macro
+/// by implementing the [Validator::validate] method.
+///
+/// ```
+/// use assert_json::{assert_json, Error, Validator, Value};
+///
+/// fn optional_string(expected: Option<String>) -> impl Validator {
+///     OptionalStringValidator { expected }
+/// }
+///
+/// /// Matches a null JSON value if expected is None, else check if the strings
+/// /// are equals
+/// struct OptionalStringValidator {
+///     expected: Option<String>,
+/// }
+///
+/// impl Validator for OptionalStringValidator {
+///     fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>> {
+///         if let Some(expected_str) = &self.expected {
+///             let string_value = value
+///                 .as_str()
+///                 .ok_or_else(|| Error::InvalidType(value, String::from("string")))?;
+///
+///             if expected_str == string_value {
+///                 Ok(())
+///             } else {
+///                 Err(Error::InvalidValue(value, expected_str.clone()))
+///             }
+///         } else {
+///             value.as_null()
+///                 .ok_or_else(|| Error::InvalidType(value, String::from("null")))
+///         }
+///     }
+/// }
+///
+/// let json = r#"
+///     {
+///         "key": "value",
+///         "none": null
+///     }
+/// "#;
+/// assert_json!(json, {
+///     "key": optional_string(Some(String::from("value"))),
+///     "none": optional_string(None),
+/// });
+/// ```
 pub trait Validator {
     fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>>;
 
@@ -97,7 +150,7 @@ where
     }
 }
 
-/// Define custom validators for different JSON types
+/// Custom validators for different JSON types
 pub mod validators;
 
 #[macro_use]
