@@ -1,7 +1,14 @@
 [package]
 name = "assert_json"
+description = "json testing made simple"
 version = "0.1.0"
 edition = "2021"
+license-file = "LICENSE"
+homepage = "https://github.com/charlesvdv/assert_json"
+repository = "https://github.com/charlesvdv/assert_json"
+readme = "README.md"
+keywords = ["json", "test", "testing", "assert"]
+categories = ["development-tools", "development-tools::testing"]
 
 [dependencies]
 serde_json = "1.0"
