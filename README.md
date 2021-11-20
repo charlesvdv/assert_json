@@ -118,3 +118,9 @@ assert_json!(json, {
 ## Alternatives
 
 - [assert-json-diff](https://github.com/davidpdrsn/assert-json-diff)
+
+
+## Acknowledgments
+
+Thanks a lot to the [serde-rs/json](https://github.com/serde-rs/json) project members
+and especially those who contributed to the `json!` macro.
