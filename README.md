@@ -1,5 +1,9 @@
 # assert_json
 
+[![ci](https://github.com/charlesvdv/assert_json/actions/workflows/ci.yml/badge.svg)](https://github.com/charlesvdv/assert_json/actions/workflows/ci.yml)
+![Crates.io](https://img.shields.io/crates/v/assert_json)
+![docs.rs](https://img.shields.io/docsrs/assert_json)
+
 A easy and declarative way to test JSON input in Rust.
 `assert_json` is a Rust macro heavily inspired by serde [json macro](https://docs.serde.rs/serde_json/macro.json.html).
 Instead of creating a JSON value from a JSON literal, `assert_json` makes sure
