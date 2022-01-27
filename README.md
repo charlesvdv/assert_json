@@ -23,7 +23,7 @@ fn test_json_ok() {
         {
             "status": "success",
             "result": {
-                "id": 5,
+                "age": 26,
                 "name": "charlesvdv"
             }
         }
@@ -34,7 +34,7 @@ fn test_json_ok() {
     assert_json!(json, {
             "status": "success",
             "result": {
-                "id": validators::u64(|&v| if v > 0 { Ok(())} else { Err(String::from("id should be greater than 0")) }),
+                "age": validators::u64(|&v| if v >= 18 { Ok(())} else { Err(String::from("age should be greater or equal than 18")) }),
                 "name": name,
             }
         }
@@ -52,7 +52,7 @@ Now, if JSON input is changed to something incorrect like this:
         {
             "status": "success",
             "result": {
-                "id": 5,
+                "age": 26,
 -                "name": "charlesvdv"
 +                "name": "incorrect name"
             }

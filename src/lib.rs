@@ -16,7 +16,7 @@
 //!         {
 //!             "status": "success",
 //!             "result": {
-//!                 "id": 5,
+//!                 "age": 26,
 //!                 "name": "charlesvdv"
 //!             }
 //!         }
@@ -27,7 +27,7 @@
 //!     assert_json!(json, {
 //!             "status": "success",
 //!             "result": {
-//!                 "id": validators::u64(|&v| if v > 0 { Ok(())} else { Err(String::from("id should be greater than 0")) }),
+//!                 "age": validators::u64(|&v| if v >= 18 { Ok(())} else { Err(String::from("age should be greater or equal than 18")) }),
 //!                 "name": name,
 //!             }
 //!         }
