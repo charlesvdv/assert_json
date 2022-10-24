@@ -1,5 +1,6 @@
 use crate::validators;
 use crate::{Error, Validator, Value};
+use std::collections::HashSet;
 
 /// Match each array element to a specific validator.
 pub fn array(array_validators: Vec<Box<dyn Validator>>) -> impl Validator {
@@ -47,6 +48,37 @@ impl Validator for ArrayValidator {
             .iter()
             .zip(self.validators.iter())
             .try_for_each(|(val, validator)| validator.validate(val))
+    }
+}
+
+/// Each supplied validator matches a different array element, in any order.
+pub fn array_contains(validators: Vec<Box<dyn Validator>>) -> impl Validator {
+    UnorderedArrayValidator { validators }
+}
+
+struct UnorderedArrayValidator {
+    validators: Vec<Box<dyn Validator>>,
+}
+
+impl Validator for UnorderedArrayValidator {
+    fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>> {
+        let value_vec = value
+            .as_array()
+            .ok_or_else(|| Error::InvalidType(value, String::from("array")))?;
+        let mut matched_values: HashSet<usize> = HashSet::new();
+        for (m, validator) in self.validators.iter().enumerate() {
+            if let Some((n, _)) = value_vec
+                .iter()
+                .enumerate()
+                .filter(|(n, _)| !matched_values.contains(n))
+                .find(|(_, v)| validator.validate(v).is_ok())
+            {
+                matched_values.insert(n);
+            } else {
+                return Err(Error::UnmatchedValidator(value, m));
+            }
+        }
+        Ok(())
     }
 }
 
@@ -137,6 +169,42 @@ mod tests {
             Ok(()),
             validator.validate(&serde_json::json!([4, "test", 3.4]))
         );
+    }
+
+    #[test]
+    fn array_contains() {
+        let validator = validators::array_contains(vec![
+            Box::new(validators::eq(1)),
+            Box::new(validators::eq(2)),
+        ]);
+
+        assert_eq!(Ok(()), validator.validate(&serde_json::json!([3, 2, 1])));
+    }
+
+    #[test]
+    fn array_contains_repetition() {
+        let validator = validators::array_contains(vec![
+            Box::new(validators::eq(1)),
+            Box::new(validators::eq(1)),
+        ]);
+
+        assert!(matches!(
+            validator.validate(&serde_json::json!([3, 1])),
+            Err(Error::UnmatchedValidator(_, _)), 
+        ));
+    }
+
+    #[test]
+    fn array_does_not_contain() {
+        let validator = validators::array_contains(vec![
+            Box::new(validators::eq(1)),
+            Box::new(validators::eq(2)),
+        ]);
+
+        assert!(matches!(
+            validator.validate(&serde_json::json!([3, 1])),
+            Err(Error::UnmatchedValidator(_, _)), 
+        ));
     }
 
     #[test]

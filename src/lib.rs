@@ -60,6 +60,8 @@ pub enum Error<'a> {
     MissingObjectKey(&'a Value, String),
     #[error("Key '{1}' is not expected in object")]
     UnexpectedObjectKey(&'a Value, String),
+    #[error("No match for expected array element {1}")]
+    UnmatchedValidator(&'a Value, usize),
 }
 
 impl<'a> Error<'a> {
@@ -69,6 +71,7 @@ impl<'a> Error<'a> {
             Error::InvalidValue(loc, _) => loc,
             Error::MissingObjectKey(loc, _) => loc,
             Error::UnexpectedObjectKey(loc, _) => loc,
+            Error::UnmatchedValidator(loc, _) => loc,
         }
     }
 }
