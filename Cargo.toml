@@ -16,5 +16,5 @@ thiserror = "1.0"
 codespan-reporting = "0.11"
 
 [dev-dependencies]
-indoc = "1.0"
-strip-ansi-escapes = "0.1"
+indoc = "2.0"
+strip-ansi-escapes = "0.2"
