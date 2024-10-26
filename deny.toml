@@ -1,4 +1,6 @@
 # configuration for https://github.com/EmbarkStudios/cargo-deny
+[graph]
+all-features = true
 
 [licenses]
 confidence-threshold = 0.8
@@ -12,9 +14,10 @@ allow = [
 yanked = "deny"
 
 [bans]
-multiple-versions = "allow"
+multiple-versions = "deny"
+wildcards = 'deny'
 
 [sources]
 unknown-registry = "deny"
-unknown-git = "warn"
+unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
