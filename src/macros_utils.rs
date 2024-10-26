@@ -11,6 +11,7 @@ use std::ops::Range;
 pub struct Input(Value);
 
 impl Input {
+    #[must_use]
     pub fn get(self) -> Value {
         self.0
     }
@@ -32,6 +33,7 @@ impl From<Value> for Input {
 pub struct ValidatorInput(Box<dyn Validator>);
 
 impl ValidatorInput {
+    #[must_use]
     pub fn get(self) -> Box<dyn Validator> {
         self.0
     }
@@ -72,7 +74,8 @@ where
     }
 }
 
-pub fn format_error<'a>(json: &'a Value, error: Error<'a>) -> String {
+#[must_use]
+pub fn format_error<'a>(json: &'a Value, error: &Error<'a>) -> String {
     let serializer = SpanSerializer::serialize(json);
 
     let mut files = SimpleFiles::new();
@@ -116,11 +119,11 @@ impl SpanSerializer {
 
         match input {
             serde_json::Value::Null => self.json.push_str("null"),
-            serde_json::Value::Bool(bool_val) => self.json.push_str(&format!("{}", bool_val)),
+            serde_json::Value::Bool(bool_val) => self.json.push_str(&format!("{bool_val}")),
             serde_json::Value::Number(num_val) => {
                 self.json.push_str(&num_val.to_string());
             }
-            serde_json::Value::String(str_val) => self.json.push_str(&format!("\"{}\"", str_val)),
+            serde_json::Value::String(str_val) => self.json.push_str(&format!("\"{str_val}\"")),
             serde_json::Value::Array(arr_val) => {
                 self.json.push_str("[\n");
                 self.current_ident += 1;
@@ -134,7 +137,7 @@ impl SpanSerializer {
                 self.json.push('\n');
                 self.current_ident -= 1;
                 self.ident();
-                self.json.push(']')
+                self.json.push(']');
             }
             serde_json::Value::Object(obj_val) => {
                 self.json.push_str("{\n");
@@ -144,18 +147,19 @@ impl SpanSerializer {
                         self.json.push_str(",\n");
                     }
                     self.ident();
-                    self.json.push_str(&format!("\"{}\": ", key));
+                    self.json.push_str(&format!("\"{key}\": "));
                     self.serialize_recursive(value);
                 }
                 self.json.push('\n');
                 self.current_ident -= 1;
                 self.ident();
-                self.json.push('}')
+                self.json.push('}');
             }
         }
 
         let end = self.json.len();
-        self.spans.insert(input as *const Value, start..end);
+        self.spans
+            .insert(std::ptr::from_ref::<Value>(input), start..end);
     }
 
     fn ident(&mut self) {
@@ -168,7 +172,7 @@ impl SpanSerializer {
 
     fn span(&self, val: &Value) -> Range<usize> {
         self.spans
-            .get(&(val as *const Value))
+            .get(&std::ptr::from_ref::<Value>(val))
             .expect("expected span")
             .clone()
     }
@@ -230,6 +234,6 @@ mod tests {
                     }
                 ]"#},
             serializer.serialized_json()
-        )
+        );
     }
 }

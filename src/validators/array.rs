@@ -3,6 +3,7 @@ use crate::{Error, Validator, Value};
 use std::collections::HashSet;
 
 /// Match each array element to a specific validator.
+#[must_use]
 pub fn array(array_validators: Vec<Box<dyn Validator>>) -> impl Validator {
     ArrayValidator {
         validators: array_validators,
@@ -10,6 +11,8 @@ pub fn array(array_validators: Vec<Box<dyn Validator>>) -> impl Validator {
 }
 
 /// Match the array size.
+#[must_use]
+#[expect(trivial_casts)]
 pub fn array_size(expected_size: usize) -> impl Validator {
     ArrayValidator {
         validators: (0..expected_size)
@@ -19,6 +22,7 @@ pub fn array_size(expected_size: usize) -> impl Validator {
 }
 
 /// Match empty array.
+#[must_use]
 pub fn array_empty() -> impl Validator {
     ArrayValidator { validators: vec![] }
 }
@@ -52,6 +56,7 @@ impl Validator for ArrayValidator {
 }
 
 /// Each supplied validator matches a different array element, in any order.
+#[must_use]
 pub fn array_contains(validators: Vec<Box<dyn Validator>>) -> impl Validator {
     UnorderedArrayValidator { validators }
 }
@@ -138,7 +143,7 @@ mod tests {
             Box::new(validators::null()),
         ]);
 
-        assert_eq!(Ok(()), validator.validate(&serde_json::json!([5, null,])))
+        assert_eq!(Ok(()), validator.validate(&serde_json::json!([5, null,])));
     }
 
     #[test]
@@ -190,7 +195,7 @@ mod tests {
 
         assert!(matches!(
             validator.validate(&serde_json::json!([3, 1])),
-            Err(Error::UnmatchedValidator(_, _)), 
+            Err(Error::UnmatchedValidator(_, _)),
         ));
     }
 
@@ -203,7 +208,7 @@ mod tests {
 
         assert!(matches!(
             validator.validate(&serde_json::json!([3, 1])),
-            Err(Error::UnmatchedValidator(_, _)), 
+            Err(Error::UnmatchedValidator(_, _)),
         ));
     }
 

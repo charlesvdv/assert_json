@@ -13,7 +13,7 @@ macro_rules! assert_json {
         let input = Into::<Input>::into($val).get();
         let result = validator.validate(&input);
         if let Err(error) = result {
-            panic!("{}", format_error(&input, error));
+            panic!("{}", format_error(&input, &error));
         }
     });
 }
@@ -80,7 +80,7 @@ macro_rules! expand_json_validator {
 
     // Insert the current entry followed by trailing comma.
     (@object $object:ident [$($key:tt)+] ($value:expr) , $($rest:tt)*) => {
-        let _ = $object.insert(($($key)+).into(), $value);
+        let _unused = $object.insert(($($key)+).into(), $value);
         $crate::expand_json_validator!(@object $object () ($($rest)*) ($($rest)*));
     };
 
@@ -91,7 +91,7 @@ macro_rules! expand_json_validator {
 
     // Insert the last entry without trailing comma.
     (@object $object:ident [$($key:tt)+] ($value:expr)) => {
-        let _ = $object.insert(($($key)+).into(), $value);
+        let _unused = $object.insert(($($key)+).into(), $value);
     };
 
     // Next value is `null`.
@@ -249,7 +249,7 @@ mod test {
 
     #[test]
     fn assert_json_string() {
-        assert_json!(r#""str""#, "str")
+        assert_json!(r#""str""#, "str");
     }
 
     #[test]
@@ -352,9 +352,9 @@ mod test {
 
     #[test]
     fn assert_json_is_expression() {
-        assert_json!("null", null) // the missing ";" is normal
-                                   // this is to test if the the assert_json macros
-                                   // can be used as an expression like assert_eq!
+        assert_json!("null", null); // the missing ";" is normal
+                                    // this is to test if the the assert_json macros
+                                    // can be used as an expression like assert_eq!
     }
 
     #[test]

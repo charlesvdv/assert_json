@@ -15,11 +15,11 @@ macro_rules! assert_panic_output {
 
 #[test]
 fn primitive_invalid_type() {
-    let expected_output = indoc! {r#"
+    let expected_output = indoc! {r"
           │
         1 │ true
           │ ^^^^ Invalid type. Expected number but got bool.
-    "#};
+    "};
 
     assert_panic_output!(expected_output, assert_json!("true", 5));
 }
@@ -39,7 +39,7 @@ fn missing_object_key() {
             "key": "val",
             "missing_key": null,
         })
-    )
+    );
 }
 
 #[test]
