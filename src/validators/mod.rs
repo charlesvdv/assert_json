@@ -46,7 +46,10 @@ where
     fn validate<'a>(&self, value: &'a Value) -> Result<(), Error<'a>> {
         let expected_val = self.expected.clone().into();
         if get_value_type_id(&expected_val) != get_value_type_id(value) {
-            return Err(Error::InvalidType(value, get_value_type_id(&expected_val)));
+            return Err(Error::InvalidType(
+                value,
+                get_value_type_id(&expected_val).to_string(),
+            ));
         }
 
         if value == &expected_val {
