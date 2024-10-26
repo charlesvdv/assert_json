@@ -1,6 +1,6 @@
-use crate::validators;
-use crate::{Error, Validator, Value};
 use std::collections::HashSet;
+
+use crate::{validators, Error, Validator, Value};
 
 /// Match each array element to a specific validator.
 pub fn array(array_validators: Vec<Box<dyn Validator>>) -> impl Validator {
@@ -111,8 +111,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::validators;
-    use crate::{Error, Validator};
+    use crate::{validators, Error, Validator};
 
     #[test]
     fn non_array() {
@@ -190,7 +189,7 @@ mod tests {
 
         assert!(matches!(
             validator.validate(&serde_json::json!([3, 1])),
-            Err(Error::UnmatchedValidator(_, _)), 
+            Err(Error::UnmatchedValidator(_, _)),
         ));
     }
 
@@ -203,7 +202,7 @@ mod tests {
 
         assert!(matches!(
             validator.validate(&serde_json::json!([3, 1])),
-            Err(Error::UnmatchedValidator(_, _)), 
+            Err(Error::UnmatchedValidator(_, _)),
         ));
     }
 

@@ -1,5 +1,6 @@
-use crate::{Error, Validator, Value};
 use std::collections::HashMap;
+
+use crate::{Error, Validator, Value};
 
 /// Match if each key/value pair matches
 ///
@@ -66,8 +67,7 @@ impl Validator for ObjectValidator {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::validators;
-    use crate::{Error, Validator};
+    use crate::{validators, Error, Validator};
 
     #[test]
     fn valid() {

@@ -1,5 +1,6 @@
-use crate::{get_value_type_id, Error, Validator, Value};
 use std::fmt::Debug;
+
+use crate::{get_value_type_id, Error, Validator, Value};
 
 mod array;
 mod object;

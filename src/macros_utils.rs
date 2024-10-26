@@ -1,12 +1,12 @@
+use std::collections::BTreeMap;
+use std::ops::Range;
+
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::files::SimpleFiles;
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor;
 
-use crate::validators;
-use crate::{Error, Validator, Value};
-use std::collections::BTreeMap;
-use std::ops::Range;
+use crate::{validators, Error, Validator, Value};
 
 pub struct Input(Value);
 
@@ -176,9 +176,10 @@ impl SpanSerializer {
 
 #[cfg(test)]
 mod tests {
+    use indoc::indoc;
+
     use super::SpanSerializer;
     use crate::Value;
-    use indoc::indoc;
 
     #[test]
     fn serializer_primitive() {

@@ -1,5 +1,4 @@
-use assert_json::assert_json;
-use assert_json::validators;
+use assert_json::{assert_json, validators};
 use indoc::indoc;
 
 macro_rules! assert_panic_output {
