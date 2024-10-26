@@ -351,10 +351,12 @@ mod test {
     }
 
     #[test]
+    #[expect(
+        clippy::semicolon_if_nothing_returned,
+        reason = "the missing `;` is normal this is to test if the the assert_json macros can be used as an expression like assert_eq!"
+    )]
     fn assert_json_is_expression() {
-        assert_json!("null", null); // the missing ";" is normal
-                                    // this is to test if the the assert_json macros
-                                    // can be used as an expression like assert_eq!
+        assert_json!("null", null)
     }
 
     #[test]
