@@ -8,7 +8,7 @@ macro_rules! assert_panic_output {
         let out_err = out_result.err().unwrap();
         assert!(out_err.is::<String>());
         let out = out_err.downcast_ref::<String>().unwrap();
-        let out = String::from_utf8(strip_ansi_escapes::strip(out.clone().into_bytes()).unwrap()).unwrap();
+        let out = String::from_utf8(strip_ansi_escapes::strip(out.clone().into_bytes())).unwrap();
         assert!(out.contains($output.trim()), "\n\texpected:\n{}\n\tgot:\n{}", $output.trim(), out)
     }};
 }
