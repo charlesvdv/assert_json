@@ -12,7 +12,6 @@ categories = ["development-tools", "development-tools::testing"]
 
 [dependencies]
 serde_json = "1.0"
-thiserror = "1.0"
 codespan-reporting = "0.11"
 
 [dev-dependencies]

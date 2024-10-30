@@ -35,33 +35,49 @@
 //! }
 //! ```
 
+use core::fmt;
+
 /// A JSON-value. Used by the [Validator] trait.
 pub type Value = serde_json::Value;
 
-fn get_value_type_id(val: &Value) -> String {
+fn get_value_type_id(val: &Value) -> &'static str {
     match val {
-        serde_json::Value::Null => String::from("null"),
-        serde_json::Value::Bool(_) => String::from("bool"),
-        serde_json::Value::Number(_) => String::from("number"),
-        serde_json::Value::String(_) => String::from("string"),
-        serde_json::Value::Array(_) => String::from("array"),
-        serde_json::Value::Object(_) => String::from("object"),
+        serde_json::Value::Null => "null",
+        serde_json::Value::Bool(_) => "bool",
+        serde_json::Value::Number(_) => "number",
+        serde_json::Value::String(_) => "string",
+        serde_json::Value::Array(_) => "array",
+        serde_json::Value::Object(_) => "object",
     }
 }
 
 /// Validation error
-#[derive(thiserror::Error, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Error<'a> {
-    #[error("Invalid type. Expected {} but got {}.", .1, get_value_type_id(.0))]
     InvalidType(&'a Value, String),
-    #[error("Invalid value. Expected {1} but got {0}.")]
     InvalidValue(&'a Value, String),
-    #[error("Missing key '{1}' in object")]
     MissingObjectKey(&'a Value, String),
-    #[error("Key '{1}' is not expected in object")]
     UnexpectedObjectKey(&'a Value, String),
-    #[error("No match for expected array element {1}")]
     UnmatchedValidator(&'a Value, usize),
+}
+
+impl<'a> std::error::Error for Error<'a> {}
+
+impl<'a> fmt::Display for Error<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidType(v, s) => write!(
+                f,
+                "Invalid type. Expected {} but got {}.",
+                s,
+                get_value_type_id(v)
+            ),
+            Self::InvalidValue(v, s) => write!(f, "Invalid value. Expected {s} but got {v}."),
+            Self::MissingObjectKey(_v, s) => write!(f, "Missing key '{s}' in object"),
+            Self::UnexpectedObjectKey(_v, s) => write!(f, "Key '{s}' is not expected in object"),
+            Self::UnmatchedValidator(_v, s) => write!(f, "No match for expected array element {s}"),
+        }
+    }
 }
 
 impl<'a> Error<'a> {
