@@ -10,13 +10,74 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build-test:
+    name: Build and test (${{ matrix.os }})
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swatinem/rust-cache@v2
+      - name: Build
+        run: >
+          cargo build
+          --verbose
+
+      - name: Run tests (without coverage)
+        run: >
+          cargo test
+          --verbose
+
+  check-clippy-and-format:
+    name: Check clippy and format
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - uses: actions/checkout@v4
+      - uses: swatinem/rust-cache@v2
+
+      - name: Set up nightly toolchain
+        # Cannot be `minimal` profile, need `rustfmt` and `clippy`:
+        # https://rust-lang.github.io/rustup/concepts/profiles.html#profiles
+        run: >
+          rustup toolchain install nightly
+          && rustup component add --toolchain nightly rustfmt
+
+      - name: Check formatting
+        run: >
+          cargo +nightly fmt
+          --all
+          -- --check
+
+      - name: Check clippy
+        run: >
+          cargo clippy
+          --workspace
+          --all-targets
+          --all-features
+          -- --deny warnings
+
+  cargo-deny:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        checks:
+          - advisories
+          - bans licenses sources
+
+    # Prevent sudden announcement of a new advisory from failing ci:
+    continue-on-error: ${{ matrix.checks == 'advisories' }}
+
+    steps:
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871
+    - uses: EmbarkStudios/cargo-deny-action@8371184bd11e21dcf8ac82ebf8c9c9f74ebf7268
+      with:
+        command: check ${{ matrix.checks }}
