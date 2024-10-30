@@ -1,10 +1,10 @@
 //! A easy and declarative way to test JSON input in Rust.
 //!
-//! [assert_json!] is a Rust macro heavily inspired by [serde_json::json!] macro.
-//! Instead of creating a JSON value from a JSON literal, [assert_json!] makes sure
+//! [`assert_json`!] is a Rust macro heavily inspired by [`serde_json::json`!] macro.
+//! Instead of creating a JSON value from a JSON literal, [`assert_json`!] makes sure
 //! the JSON input conforms to the validation rules specified.
 //!
-//! [assert_json!] also output beautiful error message when a validation error occurs.
+//! [`assert_json`!] also output beautiful error message when a validation error occurs.
 //!
 //! ```
 //! # use assert_json::assert_json;
@@ -83,19 +83,19 @@ impl<'a> fmt::Display for Error<'a> {
 impl<'a> Error<'a> {
     fn location(&self) -> &'a Value {
         match self {
-            Error::InvalidType(loc, _) => loc,
-            Error::InvalidValue(loc, _) => loc,
-            Error::MissingObjectKey(loc, _) => loc,
-            Error::UnexpectedObjectKey(loc, _) => loc,
-            Error::UnmatchedValidator(loc, _) => loc,
+            Error::InvalidType(loc, _)
+            | Error::InvalidValue(loc, _)
+            | Error::MissingObjectKey(loc, _)
+            | Error::UnexpectedObjectKey(loc, _)
+            | Error::UnmatchedValidator(loc, _) => loc,
         }
     }
 }
 
-/// Abstract the validation action for [assert_json!] macro.
+/// Abstract the validation action for [`assert_json`!] macro.
 ///
 /// Any custom validation rule can be easily use in the macro
-/// by implementing the [Validator::validate] method.
+/// by implementing the [`Validator::validate`] method.
 ///
 /// ```
 /// use assert_json::{assert_json, Error, Validator, Value};

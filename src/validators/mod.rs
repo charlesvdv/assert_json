@@ -13,6 +13,7 @@ pub use primitive::*;
 /// Match any value.
 ///
 /// It will never return an error.
+#[must_use]
 pub fn any() -> impl Validator {
     AnyValidator {}
 }
@@ -76,7 +77,7 @@ mod tests {
     fn eq_string() {
         let validator = super::eq("test");
 
-        assert_eq!(Ok(()), validator.validate(&serde_json::json!("test")))
+        assert_eq!(Ok(()), validator.validate(&serde_json::json!("test")));
     }
 
     #[test]

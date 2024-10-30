@@ -17,3 +17,52 @@ codespan-reporting = "0.11"
 [dev-dependencies]
 indoc = "2.0"
 strip-ansi-escapes = "0.2"
+
+[lints.rust]
+# Lint groups are set to warn so new lints are used as they become available
+future_incompatible = { level = "warn", priority = -1 }
+let_underscore = { level = "warn", priority = -1 }
+nonstandard-style = { level = "warn", priority = -1 }
+rust_2018_compatibility = { level = "warn", priority = -1 }
+rust_2018_idioms = { level = "warn", priority = -1 }
+rust_2021_compatibility = { level = "warn", priority = -1 }
+unused = { level = "warn", priority = -1 }
+warnings = { level = "warn", priority = -1 }
+
+# 2024 compatibility is allow for now and will be fixed in a near-future PR
+rust_2024_compatibility = { level = "allow", priority = -2 }
+
+# We also warn on a set of individual lints that are ont included in any group
+dead_code = "warn"
+trivial_casts = "warn"
+trivial_numeric_casts = "warn"
+unsafe_code = "warn"
+unused_import_braces = "warn"
+unused_lifetimes = "warn"
+unused_macro_rules = "warn"
+unused_qualifications = "warn"
+
+# These lints are allowed, but we want to deny them over time
+async_fn_in_trait = "allow"
+
+[lints.clippy]
+# Lint groups are set to warn so new lints are used as they become available
+complexity = { level = "warn", priority = -1 }
+correctness = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+style = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
+
+# Cherry pick lints from the `restriction` group
+dbg_macro = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+
+# These lints are explicitly allowed as they don't provide value for this crate.
+missing_panics_doc = "allow" # this lib is designed to be used in `#[cfg(test)]` code
+missing_errors_doc = "allow" # this lib is designed to be used in `#[cfg(test)]` code
+implicit_hasher = "allow" # this lib is designed to be used in `#[cfg(test)]` code
+
+# These lints are allowed, but we want to deny them over time
+module_name_repetitions = "allow"

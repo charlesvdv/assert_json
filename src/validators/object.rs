@@ -4,8 +4,9 @@ use crate::{Error, Validator, Value};
 
 /// Match if each key/value pair matches
 ///
-/// Ignore key that are not specified. Use [object_strict] if you want to
+/// Ignore key that are not specified. Use [`object_strict`] if you want to
 /// exactly match all the key/values.
+#[must_use]
 pub fn object(key_validators: HashMap<String, Box<dyn Validator>>) -> impl Validator {
     ObjectValidator {
         key_validators,
@@ -14,6 +15,7 @@ pub fn object(key_validators: HashMap<String, Box<dyn Validator>>) -> impl Valid
 }
 
 /// Match if each key/value pairs matches. Fail if a key is missing in the validators.
+#[must_use]
 pub fn object_strict(key_validators: HashMap<String, Box<dyn Validator>>) -> impl Validator {
     ObjectValidator {
         key_validators,
@@ -22,6 +24,7 @@ pub fn object_strict(key_validators: HashMap<String, Box<dyn Validator>>) -> imp
 }
 
 /// Match if the object is empty.
+#[must_use]
 pub fn object_empty() -> impl Validator {
     ObjectValidator {
         key_validators: HashMap::new(),
@@ -45,7 +48,7 @@ impl Validator for ObjectValidator {
                 .get(key)
                 .ok_or_else(|| Error::MissingObjectKey(value, key.clone()))?;
 
-            validator.validate(inner_value)?
+            validator.validate(inner_value)?;
         }
 
         if self.strict {
@@ -55,7 +58,7 @@ impl Validator for ObjectValidator {
                 self.key_validators
                     .get(key)
                     .ok_or_else(|| Error::UnexpectedObjectKey(value, key.clone()))
-                    .map(|_| ())?
+                    .map(|_| ())?;
             }
         }
 

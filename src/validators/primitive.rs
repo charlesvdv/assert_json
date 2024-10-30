@@ -13,11 +13,12 @@ where
 }
 
 /// Match if null.
+#[must_use]
 pub fn null() -> impl Validator {
     PrimitiveValidator {
         typename: String::from("null"),
-        extract: |val| val.as_null(),
-        predicate: |_| Ok(()),
+        extract: serde_json::Value::as_null,
+        predicate: |()| Ok(()),
     }
 }
 
@@ -28,7 +29,7 @@ where
 {
     PrimitiveValidator {
         typename: String::from("bool"),
-        extract: |val| val.as_bool(),
+        extract: serde_json::Value::as_bool,
         predicate,
     }
 }
@@ -40,7 +41,7 @@ where
 {
     PrimitiveValidator {
         typename: String::from("i64"),
-        extract: |val| val.as_i64(),
+        extract: serde_json::Value::as_i64,
         predicate,
     }
 }
@@ -52,7 +53,7 @@ where
 {
     PrimitiveValidator {
         typename: String::from("u64"),
-        extract: |val| val.as_u64(),
+        extract: serde_json::Value::as_u64,
         predicate,
     }
 }
@@ -64,7 +65,7 @@ where
 {
     PrimitiveValidator {
         typename: String::from("f64"),
-        extract: |val| val.as_f64(),
+        extract: serde_json::Value::as_f64,
         predicate,
     }
 }
@@ -108,7 +109,7 @@ mod tests {
         let validator = super::string(|_| Err(String::from("error message")));
 
         assert!(matches!(
-            validator.validate(&Value::String("".to_string())),
+            validator.validate(&Value::String(String::new())),
             Err(Error::InvalidValue(_, _))
         ));
     }
