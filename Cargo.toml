@@ -66,3 +66,4 @@ implicit_hasher = "allow" # this lib is designed to be used in `#[cfg(test)]` co
 
 # These lints are allowed, but we want to deny them over time
 module_name_repetitions = "allow"
+should_panic_without_expect = "allow"
