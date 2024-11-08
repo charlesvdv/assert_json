@@ -1,15 +1,31 @@
+use std::{any::Any, io::IsTerminal as _};
+
 use assert_json::{assert_json, validators};
 use indoc::indoc;
 
 macro_rules! assert_panic_output {
-    ($output:expr, $($assert:tt)+) => {{
+    ($expected_output:expr, $($assert:tt)+) => {{
         let out_result = std::panic::catch_unwind(|| $($assert)+);
-        let out_err = out_result.err().unwrap();
-        assert!(out_err.is::<String>());
-        let out = out_err.downcast_ref::<String>().unwrap();
-        let out = String::from_utf8(strip_ansi_escapes::strip(out.clone().into_bytes())).unwrap();
-        assert!(out.contains($output.trim()), "\n\texpected:\n{}\n\tgot:\n{}", $output.trim(), out)
+        let err = out_result_to_string(out_result);
+        let expected_output = $expected_output.trim();
+        assert!(err.contains(expected_output), "\n\texpected:\n{expected_output}\n\tgot:\n{err}")
     }};
+}
+
+#[expect(unsafe_code)]
+fn out_result_to_string(result: Result<(), Box<dyn Any + Send>>) -> String {
+    let err = result.unwrap_err();
+    let s = err
+        .downcast::<String>()
+        .expect("the assert output should be a String");
+
+    // ANSI escapes should only be written when `assert_json!` is called from a terminal
+    if std::io::stderr().is_terminal() {
+        let bytes = strip_ansi_escapes::strip(s.into_bytes());
+        unsafe { String::from_utf8_unchecked(bytes) }
+    } else {
+        *s
+    }
 }
 
 #[test]
