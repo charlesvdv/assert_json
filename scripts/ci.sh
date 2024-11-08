@@ -9,6 +9,7 @@ echo "Starting build at: ${start} on ${host_name}"
 export RUST_BACKTRACE="full"
 
 cargo deny check
+cargo +nightly fmt --all -- --check
 cargo build --verbose
 cargo test --verbose --all-features
 cargo clippy --workspace --all-targets --all-features -- --deny warnings
