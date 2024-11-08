@@ -1,4 +1,5 @@
-use std::{any::Any, io::IsTerminal as _};
+use std::any::Any;
+use std::io::IsTerminal as _;
 
 use assert_json::{assert_json, validators};
 use indoc::indoc;
