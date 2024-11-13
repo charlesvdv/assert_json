@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::io::IsTerminal as _;
 use std::ops::Range;
 
 use codespan_reporting::diagnostic::{Diagnostic, Label};
@@ -89,13 +90,20 @@ pub fn format_error<'a>(json: &'a Value, error: &Error<'a>) -> String {
         )
         .with_message(error.to_string())]);
 
-    let output = Vec::<u8>::new();
-    let mut writer = termcolor::Ansi::new(output);
     let config = term::Config::default();
+    let bytes = Vec::<u8>::new();
 
-    term::emit(&mut writer, &config, &files, &diagnostic).unwrap();
+    let bytes = if std::io::stderr().is_terminal() {
+        let mut writer = termcolor::Ansi::new(bytes);
+        term::emit(&mut writer, &config, &files, &diagnostic).unwrap();
+        writer.into_inner()
+    } else {
+        let mut writer = termcolor::NoColor::new(bytes);
+        term::emit(&mut writer, &config, &files, &diagnostic).unwrap();
+        writer.into_inner()
+    };
 
-    String::from_utf8(writer.into_inner()).unwrap()
+    String::from_utf8(bytes).unwrap()
 }
 
 /// Serialize a JSON [Value] and keeps the span information of each
